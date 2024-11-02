@@ -1,4 +1,4 @@
-var holyDays = [
+var novusOrdoSolemnities = [
     {day: new Date("January 1, 2021"), description: "Blessed Virgin Mary, Mother of God"},
     {day: new Date("January 6, 2021"), description: "Epiphany"},
     {day: new Date("March 19, 2021"), description: "Saint Joseph"},
@@ -18,13 +18,32 @@ var holyDays = [
     {day: new Date("December 25, 2021"), description: "Christmas!!!"}];
 
 var today = new Date();
+var isTodayASolemnity = IsTodayASolemnity();
+if (!isTodayASolemnity){
+    SetNextSolemnity();
+}
 
-for (var i = 0; i < holyDays.length; i++)
-{
-	if (today.toDateString() == holyDays[i].day.toDateString())
-	{
-		document.getElementById("yesno").innerHTML = "YES!";
-		document.getElementById("desc").innerHTML = holyDays[i].description;
-		i = 100;
-	}
+function IsTodayASolemnity(){
+    for (var i = 0; i < novusOrdoSolemnities.length; i++)
+    {
+        if (today.toDateString() == novusOrdoSolemnities[i].day.toDateString())
+        {
+            document.getElementById("solemnityNovusOrdoYesNo").innerHTML = "YES!";
+            document.getElementById("solemnityNovusOrdoDesc").innerHTML = novusOrdoSolemnities[i].description;
+            return true;
+        }
+    }
+    return false;
+}
+
+function SetNextSolemnity(){
+    for (var i = 0; i < novusOrdoSolemnities.length; i++) {
+        if (today < novusOrdoSolemnities[i].day )
+        {
+            document.getElementById("solemnityNovusOrdoDesc").innerHTML = 
+                "The next Solemnity is " + novusOrdoSolemnities[i].day.toDateString() + 
+                ' ' + novusOrdoSolemnities[i].description;
+            break;
+        }
+    }
 }
