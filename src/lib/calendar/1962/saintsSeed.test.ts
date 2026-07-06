@@ -44,6 +44,6 @@ describe("findSaintOfTheDay1962", () => {
   });
 
   it("returns null for a date with no seeded saint", () => {
-    expect(findSaintOfTheDay1962("02-14")).toBeNull();
+    expect(findSaintOfTheDay1962("01-01")).toBeNull();
   });
 });
