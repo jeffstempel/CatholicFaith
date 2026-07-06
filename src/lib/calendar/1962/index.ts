@@ -1,8 +1,8 @@
-import { toISODate, toMonthDay } from "../dateUtils";
+import { toISODate, toMonthDay, utcDate } from "../dateUtils";
 import type { Celebration, LiturgicalDay } from "../types";
 import { findEmberDay } from "./emberDays";
 import { findSaintOfTheDay1962 } from "./saintsSeed";
-import { findSanctoraleCelebration } from "./sanctorale";
+import { findSanctoraleCelebration, sanctorale } from "./sanctorale";
 import { getTemporale } from "./temporale";
 
 // getTemporale computes the whole year's movable solemnities at once; memoize
@@ -34,4 +34,27 @@ export function getLiturgicalDay1962(date: Date): LiturgicalDay {
   ].filter((c): c is Celebration => c != null);
 
   return { date: iso, calendar: "1962", celebrations };
+}
+
+/**
+ * The next 1962 Feast Day strictly after `from`. The 1962 calendar has no
+ * "Solemnity" rank of its own — the major days modeled in sanctorale.ts and
+ * temporale.ts (Christmas, Easter, Assumption, etc.) are themselves Feasts of
+ * the highest class, so both are the correct source for this, not the curated
+ * Saint-of-the-Day seed list.
+ */
+export function getNextFeastDay(from: Date): Date {
+  const year = from.getUTCFullYear();
+  const movable = [...getTemporale(year), ...getTemporale(year + 1)].map((d) => d.date);
+  const fixed = [year, year + 1].flatMap((y) =>
+    sanctorale.map(({ monthDay }) => {
+      const [month, day] = monthDay.split("-").map(Number);
+      return utcDate(y, month, day);
+    }),
+  );
+
+  const upcoming = [...movable, ...fixed]
+    .filter((date) => date.getTime() > from.getTime())
+    .sort((a, b) => a.getTime() - b.getTime());
+  return upcoming[0];
 }
