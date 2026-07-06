@@ -144,6 +144,13 @@ a {
   box-shadow: 0 0 0 1px var(--color-accent-soft);
 }
 
+.section-note {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 1rem 0 0;
+}
+
 footer.site-footer {
   text-align: center;
   color: var(--color-text-muted);
