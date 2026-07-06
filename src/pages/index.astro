@@ -3,6 +3,7 @@ import CalendarColumn from "../components/CalendarColumn.astro";
 import CompareRow from "../components/CompareRow.astro";
 import Base from "../layouts/Base.astro";
 import { todayUTC } from "../lib/calendar/dateUtils";
+import { getNextEmberDay } from "../lib/calendar/1962/emberDays";
 import { getBothCalendars } from "../lib/calendar/lookup";
 import type { Celebration } from "../lib/calendar/types";
 
@@ -12,6 +13,13 @@ const { traditional, novusOrdo } = getBothCalendars(today);
 const dateLabel = today.toLocaleDateString("en-US", {
   timeZone: "UTC",
   weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const nextEmberDayLabel = getNextEmberDay(today).toLocaleDateString("en-US", {
+  timeZone: "UTC",
   year: "numeric",
   month: "long",
   day: "numeric",
@@ -46,6 +54,9 @@ const novusOrdoCelebration = novusOrdo.celebrations[0] as Celebration | undefine
         description="Ember Days are not observed in the current calendar."
         tone="no"
       />
+    </Fragment>
+    <Fragment slot="note">
+      <p class="section-note">Next Ember Day: {nextEmberDayLabel}</p>
     </Fragment>
   </CompareRow>
 
