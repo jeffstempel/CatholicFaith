@@ -1,0 +1,97 @@
+---
+import CalendarColumn from "../components/CalendarColumn.astro";
+import CompareRow from "../components/CompareRow.astro";
+import Base from "../layouts/Base.astro";
+import { todayUTC } from "../lib/calendar/dateUtils";
+import { getBothCalendars } from "../lib/calendar/lookup";
+import type { Celebration } from "../lib/calendar/types";
+
+const today = todayUTC();
+const { traditional, novusOrdo } = getBothCalendars(today);
+
+const dateLabel = today.toLocaleDateString("en-US", {
+  timeZone: "UTC",
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+const traditionalEmberDay = traditional.celebrations.find((c) => c.isEmberDay);
+const traditionalSolemnity = traditional.celebrations.find((c) => c.isSolemnity);
+const traditionalSaint = traditional.celebrations.find((c: Celebration) => !c.isSolemnity && !c.isEmberDay);
+const novusOrdoCelebration = novusOrdo.celebrations[0] as Celebration | undefined;
+---
+
+<Base>
+  <header class="site-header">
+    <h1>Catholic Faith Today</h1>
+    <p class="tagline">The Traditional 1962 calendar and today's Novus Ordo calendar, side by side — {dateLabel}</p>
+  </header>
+
+  <CompareRow title="Is Today an Ember Day?">
+    <Fragment slot="left">
+      <CalendarColumn
+        label="1962 Calendar"
+        value={traditionalEmberDay ? "Yes!" : "No"}
+        description={traditionalEmberDay?.name ?? "Not an Ember Day today."}
+        tone={traditionalEmberDay ? "yes" : "no"}
+        highlighted={Boolean(traditionalEmberDay)}
+      />
+    </Fragment>
+    <Fragment slot="right">
+      <CalendarColumn
+        label="Novus Ordo"
+        value="No"
+        description="Ember Days are not observed in the current calendar."
+        tone="no"
+      />
+    </Fragment>
+  </CompareRow>
+
+  <CompareRow title="Is Today a Solemnity or Feast Day?">
+    <Fragment slot="left">
+      <CalendarColumn
+        label="1962 Calendar"
+        value={traditionalSolemnity ? "Yes!" : "No"}
+        description={traditionalSolemnity?.name ?? "No major solemnity recorded for today."}
+        tone={traditionalSolemnity ? "yes" : "no"}
+        highlighted={Boolean(traditionalSolemnity)}
+      />
+    </Fragment>
+    <Fragment slot="right">
+      <CalendarColumn
+        label="Novus Ordo"
+        value={novusOrdoCelebration?.isSolemnity ? "Yes!" : "No"}
+        description={novusOrdoCelebration?.isSolemnity
+          ? novusOrdoCelebration.name
+          : "No solemnity today."}
+        tone={novusOrdoCelebration?.isSolemnity ? "yes" : "no"}
+        highlighted={novusOrdoCelebration?.isSolemnity}
+      />
+    </Fragment>
+  </CompareRow>
+
+  <CompareRow title="Saint of the Day">
+    <Fragment slot="left">
+      <CalendarColumn
+        label="1962 Calendar"
+        value={traditionalSaint?.name ?? "Not yet recorded"}
+        description={traditionalSaint ? undefined : "Our traditional Saint-of-the-Day list is still growing."}
+        tone="neutral"
+      />
+    </Fragment>
+    <Fragment slot="right">
+      <CalendarColumn
+        label="Novus Ordo"
+        value={novusOrdoCelebration && !novusOrdoCelebration.isSolemnity ? novusOrdoCelebration.name : "—"}
+        description={novusOrdoCelebration?.isSolemnity ? "Today's solemnity is shown above." : undefined}
+        tone="neutral"
+      />
+    </Fragment>
+  </CompareRow>
+
+  <footer class="site-footer">
+    <p>CatholicFaith.Today &mdash; comparing the Extraordinary and Ordinary Forms of the Roman Rite.</p>
+  </footer>
+</Base>
