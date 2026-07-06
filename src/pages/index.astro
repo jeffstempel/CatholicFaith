@@ -3,8 +3,10 @@ import CalendarColumn from "../components/CalendarColumn.astro";
 import CompareRow from "../components/CompareRow.astro";
 import Base from "../layouts/Base.astro";
 import { todayUTC } from "../lib/calendar/dateUtils";
+import { getLiturgicalDay1962, getNextFeastDay } from "../lib/calendar/1962";
 import { getNextEmberDay } from "../lib/calendar/1962/emberDays";
 import { getBothCalendars } from "../lib/calendar/lookup";
+import { getLiturgicalDayNovusOrdo, getNextSolemnity } from "../lib/calendar/novusOrdo";
 import type { Celebration } from "../lib/calendar/types";
 
 const today = todayUTC();
@@ -18,12 +20,22 @@ const dateLabel = today.toLocaleDateString("en-US", {
   day: "numeric",
 });
 
-const nextEmberDayLabel = getNextEmberDay(today).toLocaleDateString("en-US", {
+const dateFormatOptions: Intl.DateTimeFormatOptions = {
   timeZone: "UTC",
   year: "numeric",
   month: "long",
   day: "numeric",
-});
+};
+
+const nextEmberDayLabel = getNextEmberDay(today).toLocaleDateString("en-US", dateFormatOptions);
+
+const nextFeastDay = getNextFeastDay(today);
+const nextFeastDayLabel = nextFeastDay.toLocaleDateString("en-US", dateFormatOptions);
+const nextFeastDayName = getLiturgicalDay1962(nextFeastDay).celebrations.find((c) => c.isSolemnity)?.name;
+
+const nextSolemnityDate = getNextSolemnity(today);
+const nextSolemnityLabel = nextSolemnityDate.toLocaleDateString("en-US", dateFormatOptions);
+const nextSolemnityName = getLiturgicalDayNovusOrdo(nextSolemnityDate).celebrations[0]?.name;
 
 const traditionalEmberDay = traditional.celebrations.find((c) => c.isEmberDay);
 const traditionalSolemnity = traditional.celebrations.find((c) => c.isSolemnity);
@@ -66,6 +78,7 @@ const novusOrdoCelebration = novusOrdo.celebrations[0] as Celebration | undefine
         label="1962 Calendar"
         value={traditionalSolemnity ? "Yes!" : "No"}
         description={traditionalSolemnity?.name ?? "No major solemnity recorded for today."}
+        footnote={`Next Feast Day: ${nextFeastDayName} (${nextFeastDayLabel})`}
         tone={traditionalSolemnity ? "yes" : "no"}
         highlighted={Boolean(traditionalSolemnity)}
       />
@@ -77,6 +90,7 @@ const novusOrdoCelebration = novusOrdo.celebrations[0] as Celebration | undefine
         description={novusOrdoCelebration?.isSolemnity
           ? novusOrdoCelebration.name
           : "No solemnity today."}
+        footnote={`Next Solemnity: ${nextSolemnityName} (${nextSolemnityLabel})`}
         tone={novusOrdoCelebration?.isSolemnity ? "yes" : "no"}
         highlighted={novusOrdoCelebration?.isSolemnity}
       />

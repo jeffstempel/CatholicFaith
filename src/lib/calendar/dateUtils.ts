@@ -20,6 +20,11 @@ export function toMonthDay(date: Date): string {
   return `${m}-${d}`;
 }
 
+export function fromISODate(iso: string): Date {
+  const [year, month, day] = iso.split("-").map(Number);
+  return utcDate(year, month, day);
+}
+
 export function addDays(date: Date, days: number): Date {
   const result = new Date(date.getTime());
   result.setUTCDate(result.getUTCDate() + days);

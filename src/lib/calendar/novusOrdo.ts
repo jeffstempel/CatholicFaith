@@ -1,5 +1,5 @@
 import { calendarFor, type RomcalCelebration } from "romcal";
-import { toISODate } from "./dateUtils";
+import { fromISODate, toISODate } from "./dateUtils";
 import type { Celebration, LiturgicalDay } from "./types";
 
 const RANK_BY_ROMCAL_TYPE: Record<string, string> = {
@@ -49,4 +49,16 @@ export function getLiturgicalDayNovusOrdo(date: Date): LiturgicalDay {
     calendar: "novusOrdo",
     celebrations: celebration ? [celebration] : [],
   };
+}
+
+/** The next Novus Ordo Solemnity strictly after `from`. */
+export function getNextSolemnity(from: Date): Date {
+  const year = from.getUTCFullYear();
+  const upcoming = [year, year + 1]
+    .flatMap((y) => Array.from(getYearByDate(y).entries()))
+    .filter(([, celebration]) => celebration.isSolemnity)
+    .map(([iso]) => fromISODate(iso))
+    .filter((date) => date.getTime() > from.getTime())
+    .sort((a, b) => a.getTime() - b.getTime());
+  return upcoming[0];
 }

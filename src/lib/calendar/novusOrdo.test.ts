@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getLiturgicalDayNovusOrdo } from "./novusOrdo";
+import { getLiturgicalDayNovusOrdo, getNextSolemnity } from "./novusOrdo";
+import { toISODate } from "./dateUtils";
 
 describe("getLiturgicalDayNovusOrdo", () => {
   it("identifies Christmas as a Solemnity", () => {
@@ -26,5 +27,17 @@ describe("getLiturgicalDayNovusOrdo", () => {
         expect(result.celebrations.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("getNextSolemnity", () => {
+  it("finds the next Solemnity within the same year", () => {
+    const result = getNextSolemnity(new Date(Date.UTC(2025, 11, 1)));
+    expect(toISODate(result)).toBe("2025-12-08");
+  });
+
+  it("rolls over into next year's Mary, Mother of God after Christmas has passed", () => {
+    const result = getNextSolemnity(new Date(Date.UTC(2025, 11, 26)));
+    expect(toISODate(result)).toBe("2026-01-01");
   });
 });

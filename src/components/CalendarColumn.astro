@@ -3,15 +3,17 @@ interface Props {
   label: string;
   value: string;
   description?: string;
+  footnote?: string;
   tone?: "yes" | "no" | "neutral";
   highlighted?: boolean;
 }
 
-const { label, value, description, tone = "neutral", highlighted = false } = Astro.props;
+const { label, value, description, footnote, tone = "neutral", highlighted = false } = Astro.props;
 ---
 
 <div class:list={["calendar-column", { "is-highlighted": highlighted }]}>
   <p class="column-label">{label}</p>
   <p class:list={["column-value", { "is-yes": tone === "yes", "is-no": tone === "no" }]}>{value}</p>
   {description && <p class="column-desc">{description}</p>}
+  {footnote && <p class="column-footnote">{footnote}</p>}
 </div>
