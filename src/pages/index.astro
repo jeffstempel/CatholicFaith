@@ -6,7 +6,7 @@ import { todayUTC } from "../lib/calendar/dateUtils";
 import { getLiturgicalDay1962, getNextFeastDay } from "../lib/calendar/1962";
 import { getNextEmberDay } from "../lib/calendar/1962/emberDays";
 import { getBothCalendars } from "../lib/calendar/lookup";
-import { getLiturgicalDayNovusOrdo, getNextSolemnity } from "../lib/calendar/novusOrdo";
+import { getLiturgicalDayNovusOrdo, getNextSolemnity, getTodaySummaryNovusOrdo } from "../lib/calendar/novusOrdo";
 import type { Celebration } from "../lib/calendar/types";
 
 const today = todayUTC();
@@ -37,6 +37,8 @@ const nextSolemnityDate = getNextSolemnity(today);
 const nextSolemnityLabel = nextSolemnityDate.toLocaleDateString("en-US", dateFormatOptions);
 const nextSolemnityName = getLiturgicalDayNovusOrdo(nextSolemnityDate).celebrations[0]?.name;
 
+const novusOrdoTodaySummary = getTodaySummaryNovusOrdo(today);
+
 const traditionalEmberDay = traditional.celebrations.find((c) => c.isEmberDay);
 const traditionalSolemnity = traditional.celebrations.find((c) => c.isSolemnity);
 const traditionalSaint = traditional.celebrations.find((c: Celebration) => !c.isSolemnity && !c.isEmberDay);
@@ -48,6 +50,25 @@ const novusOrdoCelebration = novusOrdo.celebrations[0] as Celebration | undefine
     <h1>Catholic Faith Today</h1>
     <p class="tagline">The Traditional 1962 calendar and today's Novus Ordo calendar, side by side — {dateLabel}</p>
   </header>
+
+  <CompareRow title="What Is Today in the Church Calendar?">
+    <Fragment slot="left">
+      <CalendarColumn
+        label="1962 Calendar"
+        value="Coming Soon"
+        description="This feature is still being worked out."
+        tone="neutral"
+      />
+    </Fragment>
+    <Fragment slot="right">
+      <CalendarColumn
+        label="Novus Ordo"
+        value={novusOrdoTodaySummary.name}
+        description={`Liturgical Color: ${novusOrdoTodaySummary.color}`}
+        tone="neutral"
+      />
+    </Fragment>
+  </CompareRow>
 
   <CompareRow title="Is Today an Ember Day?">
     <Fragment slot="left">
@@ -77,7 +98,7 @@ const novusOrdoCelebration = novusOrdo.celebrations[0] as Celebration | undefine
       <CalendarColumn
         label="1962 Calendar"
         value={traditionalSolemnity ? "Yes!" : "No"}
-        description={traditionalSolemnity?.name ?? "No major solemnity recorded for today."}
+        description={traditionalSolemnity?.name ?? "No major feast today."}
         footnote={`Next Feast Day: ${nextFeastDayName} (${nextFeastDayLabel})`}
         tone={traditionalSolemnity ? "yes" : "no"}
         highlighted={Boolean(traditionalSolemnity)}
