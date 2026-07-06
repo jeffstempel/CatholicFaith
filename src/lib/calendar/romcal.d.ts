@@ -25,4 +25,27 @@ declare module "romcal" {
   }
 
   export function calendarFor(options: CalendarForOptions): RomcalCelebration[];
+
+  export interface RomcalSeasonDay {
+    moment: { format(pattern: string): string };
+    type: string;
+    name: string;
+    data?: {
+      season?: { key: string; value: string };
+      meta?: {
+        liturgicalColor?: { key: string; value: string };
+      };
+    };
+  }
+
+  export const Seasons: {
+    advent(year: number): RomcalSeasonDay[];
+    christmastide(year: number): RomcalSeasonDay[];
+    earlyOrdinaryTime(year: number): RomcalSeasonDay[];
+    lent(year: number): RomcalSeasonDay[];
+    easterTriduum(year: number): RomcalSeasonDay[];
+    easterOctave(year: number): RomcalSeasonDay[];
+    eastertide(year: number): RomcalSeasonDay[];
+    laterOrdinaryTime(year: number): RomcalSeasonDay[];
+  };
 }
