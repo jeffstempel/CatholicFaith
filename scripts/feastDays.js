@@ -2,7 +2,7 @@ var feasts = [
     {day: new Date("January 1, 2021"), description: "Octave Day of the Nativity"},
     {day: new Date("May 13, 2021"), description: "Ascension of the Lord"},
     {day: new Date("August 15, 2021"), description: "Assumption of Mary"},
-    {day: new Date("November 1, 2021"), description: "All Saints"},
+    {day: new Date("November 1, 2024"), description: "All Saints"},
     {day: new Date("December 8, 2021"), description: "Immaculate Conception"},
     {day: new Date("December 25, 2021"), description: "Christmas!!!"}];
 

@@ -1,0 +1,32 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Catholic Faith Today",
+  description = "The Traditional 1962 and Novus Ordo Catholic calendars, side by side: Ember Days, Solemnities, Feast Days, and the Saint of the Day.",
+} = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:title" content={title} />
+    <meta property="og:url" content="https://www.catholicfaith.today" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content={description} />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="page">
+      <slot />
+    </div>
+  </body>
+</html>
