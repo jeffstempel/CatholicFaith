@@ -1,7 +1,9 @@
 import { toISODate } from "./calendar/dateUtils";
 import { getLiturgicalDay1962, getNextFeastDay } from "./calendar/1962";
 import { getNextEmberDay } from "./calendar/1962/emberDays";
+import { getFastingAbstinence1962, type FastingAbstinence as FastingAbstinence1962 } from "./calendar/1962/fastingAbstinence";
 import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./calendar/novusOrdoLookup";
+import { getFastingAbstinenceNovusOrdo, type FastingAbstinence as FastingAbstinenceNovusOrdo } from "./calendar/novusOrdoFastingAbstinence";
 import type { Celebration } from "./calendar/types";
 
 export interface ColumnViewModel {
@@ -37,6 +39,55 @@ function formatDate(date: Date, options: Intl.DateTimeFormatOptions): string {
   return date.toLocaleDateString("en-US", options);
 }
 
+function describeFasting1962(fa: FastingAbstinence1962): Pick<ColumnViewModel, "value" | "description" | "tone" | "highlighted"> {
+  if (fa.fast && fa.abstinence === "full") {
+    return {
+      value: "Fast + Full Abstinence",
+      description: "Fasting and complete abstinence from meat are both required today.",
+      tone: "yes",
+      highlighted: true,
+    };
+  }
+  if (fa.fast && fa.abstinence === "partial") {
+    return {
+      value: "Fast + Partial Abstinence",
+      description: "A fast day; meat is permitted once, at the principal meal.",
+      tone: "yes",
+      highlighted: true,
+    };
+  }
+  if (fa.fast) {
+    return { value: "Fast Day", description: "A day of fasting; no abstinence obligation.", tone: "yes", highlighted: false };
+  }
+  if (fa.abstinence === "full") {
+    return { value: "Full Abstinence", description: "Complete abstinence from meat is required today.", tone: "yes", highlighted: false };
+  }
+  return { value: "No Obligation", description: "No fasting or abstinence obligation today.", tone: "no", highlighted: false };
+}
+
+function describeFastingNovusOrdo(fa: FastingAbstinenceNovusOrdo): Pick<ColumnViewModel, "value" | "description" | "tone" | "highlighted"> {
+  if (fa.fast && fa.abstinence === "full") {
+    return {
+      value: "Fast + Full Abstinence",
+      description: "Fasting and complete abstinence from meat are both required today.",
+      tone: "yes",
+      highlighted: true,
+    };
+  }
+  if (fa.abstinence === "full") {
+    return { value: "Full Abstinence", description: "Complete abstinence from meat is required today.", tone: "yes", highlighted: false };
+  }
+  if (fa.abstinence === "recommended") {
+    return {
+      value: "Abstinence Recommended",
+      description: "Not obligatory, but abstinence (or another penitential act) is encouraged.",
+      tone: "neutral",
+      highlighted: false,
+    };
+  }
+  return { value: "No Obligation", description: "No fasting or abstinence obligation today.", tone: "no", highlighted: false };
+}
+
 /**
  * Builds everything needed to render the page for a given date. Pure and
  * environment-agnostic (no DOM, no romcal) so it runs identically at build
@@ -63,6 +114,9 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable): Page
   const traditionalEmberDay = traditional.celebrations.find((c) => c.isEmberDay);
   const traditionalSolemnity = traditional.celebrations.find((c) => c.isSolemnity);
   const traditionalSaint = traditional.celebrations.find((c: Celebration) => !c.isSolemnity && !c.isEmberDay);
+
+  const fasting1962 = describeFasting1962(getFastingAbstinence1962(date));
+  const fastingNovusOrdo = describeFastingNovusOrdo(getFastingAbstinenceNovusOrdo(date));
 
   return {
     isoDate: toISODate(date),
@@ -102,6 +156,25 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable): Page
           highlighted: false,
         },
         note: `Next Ember Day: ${nextEmberDayLabel}`,
+      },
+      {
+        title: "Is Today a Day of Fasting or Abstinence?",
+        left: {
+          label: "1962 Calendar",
+          value: fasting1962.value,
+          description: fasting1962.description,
+          footnote: "Fasting is required on all Lenten weekdays and Ember Days. Abstinence is required every Friday of the year — partial on Ember Wednesdays/Saturdays, full otherwise.",
+          tone: fasting1962.tone,
+          highlighted: fasting1962.highlighted,
+        },
+        right: {
+          label: "Novus Ordo",
+          value: fastingNovusOrdo.value,
+          description: fastingNovusOrdo.description,
+          footnote: "Fasting is required only on Ash Wednesday and Good Friday. Abstinence is obligatory only on Fridays of Lent; recommended, not required, on other Fridays.",
+          tone: fastingNovusOrdo.tone,
+          highlighted: fastingNovusOrdo.highlighted,
+        },
       },
       {
         title: "Is Today a Solemnity or Feast Day?",

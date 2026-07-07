@@ -17,10 +17,11 @@ describe("renderSections", () => {
     const html = renderSections(vm);
     expect(html).toContain("What Is Today in the Church Calendar?");
     expect(html).toContain("Is Today an Ember Day?");
+    expect(html).toContain("Is Today a Day of Fasting or Abstinence?");
     expect(html).toContain("Is Today a Solemnity or Feast Day?");
     expect(html).toContain("Saint of the Day");
     expect(html).toContain("St. Maria Goretti");
-    expect((html.match(/calendar-column/g) ?? []).length).toBe(8); // 4 sections x 2 columns
+    expect((html.match(/calendar-column/g) ?? []).length).toBe(10); // 5 sections x 2 columns
   });
 
   it("applies tone and highlighted classes correctly", () => {
