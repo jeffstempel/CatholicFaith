@@ -53,7 +53,7 @@ const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(
   <script type="application/json" id="today-summary-table-1962" is:inline set:html={todaySummaryTable1962Json} />
 
   <script>
-    import { fromISODate, todayLocal } from "../lib/calendar/dateUtils";
+    import { fromISODate, todayLocal, toISODate } from "../lib/calendar/dateUtils";
     import type { NovusOrdoTable } from "../lib/calendar/novusOrdoLookup";
     import type { TodaySummaryTable1962 } from "../lib/calendar/1962/todaySummaryLookup";
     import { renderSections } from "../lib/render";
@@ -71,28 +71,52 @@ const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(
     const dateInput = document.getElementById("date-input") as HTMLInputElement;
     const todayButton = document.getElementById("today-button")!;
 
-    function renderFor(date: Date) {
+    // The URL's ?date= is the shareable permalink for a specific day. Social
+    // previews stay generic (see Base.astro) — a query string can't change
+    // what a crawler sees, since it's the same static file regardless — but
+    // a human following the link should land on that actual date.
+    function updateUrlForDate(iso: string, todayIso: string) {
+      const url = new URL(window.location.href);
+      if (iso === todayIso) {
+        url.searchParams.delete("date");
+      } else {
+        url.searchParams.set("date", iso);
+      }
+      history.replaceState(null, "", url);
+    }
+
+    function renderFor(date: Date, todayIso: string) {
       const vm = buildViewModel(date, novusOrdoTable, todaySummaryTable1962);
       sectionsEl.innerHTML = renderSections(vm);
       dateLabelEl.textContent = vm.dateLabel;
       dateInput.value = vm.isoDate;
+      updateUrlForDate(vm.isoDate, todayIso);
     }
 
     // The page is statically built ahead of time, so its initial content can
     // be stale by however long it's been since the last deploy — and UTC's
     // day boundary doesn't line up with the visitor's own midnight anyway.
     // Immediately recompute using the visitor's own local calendar date to
-    // correct both on every load.
-    copyrightYearEl.textContent = String(todayLocal().getUTCFullYear());
-    renderFor(todayLocal());
+    // correct both on every load — unless a specific date was requested via
+    // ?date=, in which case that's a shared permalink and should win instead
+    // of silently jumping back to today.
+    const browserToday = todayLocal();
+    const todayIso = toISODate(browserToday);
+    copyrightYearEl.textContent = String(browserToday.getUTCFullYear());
+
+    const requestedDate = new URLSearchParams(window.location.search).get("date");
+    const parsedRequestedDate = requestedDate ? fromISODate(requestedDate) : null;
+    const initialDate = parsedRequestedDate && !Number.isNaN(parsedRequestedDate.getTime()) ? parsedRequestedDate : browserToday;
+
+    renderFor(initialDate, todayIso);
 
     dateInput.addEventListener("change", () => {
       if (!dateInput.value) return;
-      renderFor(fromISODate(dateInput.value));
+      renderFor(fromISODate(dateInput.value), todayIso);
     });
 
     todayButton.addEventListener("click", () => {
-      renderFor(todayLocal());
+      renderFor(browserToday, todayIso);
     });
   </script>
 </Base>
