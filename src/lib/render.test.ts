@@ -3,7 +3,13 @@ import { renderSections } from "./render";
 import { buildViewModel } from "./viewModel";
 import { buildNovusOrdoTable } from "./calendar/novusOrdoTable";
 import type { NovusOrdoTable } from "./calendar/novusOrdoLookup";
+import type { TodaySummaryTable1962 } from "./calendar/1962/todaySummaryLookup";
 import type { PageViewModel } from "./viewModel";
+
+const todaySummaryTable1962: TodaySummaryTable1962 = {
+  "2026-07-06": { name: "Feria", color: "Green" },
+  "2026-08-23": { name: "Ember Wednesday of Michaelmas", color: "Purple" },
+};
 
 describe("renderSections", () => {
   let table: NovusOrdoTable;
@@ -13,7 +19,7 @@ describe("renderSections", () => {
   });
 
   it("renders every section with its title, columns, and values", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     const html = renderSections(vm);
     expect(html).toContain("What Is Today in the Church Calendar?");
     expect(html).toContain("Is Today an Ember Day?");
@@ -25,14 +31,14 @@ describe("renderSections", () => {
   });
 
   it("applies tone and highlighted classes correctly", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 8, 23)), table); // a real Ember Day
+    const vm = buildViewModel(new Date(Date.UTC(2026, 8, 23)), table, todaySummaryTable1962); // a real Ember Day
     const html = renderSections(vm);
     expect(html).toContain('calendar-column is-highlighted');
     expect(html).toContain('column-value is-yes');
   });
 
   it("renders a note and footnote where present", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     const html = renderSections(vm);
     expect(html).toContain('class="section-note"');
     expect(html).toMatch(/class="column-footnote">Next Feast Day:/);

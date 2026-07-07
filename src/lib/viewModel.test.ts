@@ -2,6 +2,14 @@ import { describe, expect, it, beforeAll } from "vitest";
 import { buildViewModel } from "./viewModel";
 import { buildNovusOrdoTable } from "./calendar/novusOrdoTable";
 import type { NovusOrdoTable } from "./calendar/novusOrdoLookup";
+import type { TodaySummaryTable1962 } from "./calendar/1962/todaySummaryLookup";
+
+const todaySummaryTable1962: TodaySummaryTable1962 = {
+  "2026-07-06": { name: "Feria", color: "Green" },
+  "2026-08-23": { name: "Ember Wednesday of Michaelmas", color: "Purple" },
+  "2026-07-03": { name: "Feria", color: "Green" },
+  "2026-02-18": { name: "Ash Wednesday", color: "Purple" },
+};
 
 describe("buildViewModel", () => {
   let table: NovusOrdoTable;
@@ -11,7 +19,7 @@ describe("buildViewModel", () => {
   });
 
   it("produces the today-summary, ember day, fasting, solemnity/feast, and saint sections in order", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     expect(vm.sections.map((s) => s.title)).toEqual([
       "What Is Today in the Church Calendar?",
       "Is Today an Ember Day?",
@@ -21,16 +29,17 @@ describe("buildViewModel", () => {
     ]);
   });
 
-  it("reports the Novus Ordo ferial designation on an Optional Memorial day", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+  it("reports each calendar's own today-summary from its precomputed table", () => {
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     const todaySection = vm.sections[0];
+    expect(todaySection.left.value).toBe("Feria");
+    expect(todaySection.left.description).toBe("Liturgical Color: Green");
     expect(todaySection.right.value).toBe("Monday of the 14th week of Ordinary Time");
     expect(todaySection.right.description).toBe("Liturgical Color: Green");
-    expect(todaySection.left.value).toBe("Coming Soon");
   });
 
   it("shows Yes! and highlights the 1962 column on a real Ember Day", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 8, 23)), table); // Ember Wednesday of Michaelmas 2026
+    const vm = buildViewModel(new Date(Date.UTC(2026, 8, 23)), table, todaySummaryTable1962); // Ember Wednesday of Michaelmas 2026
     const emberSection = vm.sections[1];
     expect(emberSection.left.value).toBe("Yes!");
     expect(emberSection.left.tone).toBe("yes");
@@ -39,28 +48,28 @@ describe("buildViewModel", () => {
   });
 
   it("carries a next-feast-day footnote naming the correct upcoming solemnity", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     const feastSection = vm.sections[3];
     expect(feastSection.left.footnote).toMatch(/Next Feast Day: Assumption of the Blessed Virgin Mary/);
     expect(feastSection.right.footnote).toMatch(/Next Solemnity: The Assumption of the Blessed Virgin Mary/);
   });
 
   it("shows the saint of the day on both calendars", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     const saintSection = vm.sections[4];
     expect(saintSection.left.value).toBe("St. Maria Goretti");
     expect(saintSection.right.value).toMatch(/Maria Goretti/);
   });
 
   it("shows a Friday's full abstinence status on both calendars", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 3)), table); // Friday
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 3)), table, todaySummaryTable1962); // Friday
     const fastingSection = vm.sections[2];
     expect(fastingSection.left.value).toBe("Full Abstinence");
     expect(fastingSection.right.value).toBe("Abstinence Recommended");
   });
 
   it("shows Ash Wednesday's fast + full abstinence status on both calendars", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 1, 18)), table); // Ash Wednesday 2026
+    const vm = buildViewModel(new Date(Date.UTC(2026, 1, 18)), table, todaySummaryTable1962); // Ash Wednesday 2026
     const fastingSection = vm.sections[2];
     expect(fastingSection.left.value).toBe("Fast + Full Abstinence");
     expect(fastingSection.left.highlighted).toBe(true);
@@ -69,14 +78,14 @@ describe("buildViewModel", () => {
   });
 
   it("shows Ember Wednesday's 1962 partial abstinence vs. Novus Ordo's no obligation", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 8, 23)), table); // Ember Wednesday of Michaelmas 2026
+    const vm = buildViewModel(new Date(Date.UTC(2026, 8, 23)), table, todaySummaryTable1962); // Ember Wednesday of Michaelmas 2026
     const fastingSection = vm.sections[2];
     expect(fastingSection.left.value).toBe("Fast + Partial Abstinence");
     expect(fastingSection.right.value).toBe("No Obligation");
   });
 
   it("carries each calendar's own fasting/abstinence rules as a per-column footnote", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     const fastingSection = vm.sections[2];
     expect(fastingSection.left.footnote).toMatch(/Lenten weekdays and Ember Days/);
     expect(fastingSection.right.footnote).toMatch(/Ash Wednesday and Good Friday/);
@@ -84,14 +93,15 @@ describe("buildViewModel", () => {
   });
 
   it("matches the ISO date and a human-readable date label", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table);
+    const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     expect(vm.isoDate).toBe("2026-07-06");
     expect(vm.dateLabel).toBe("Monday, July 6, 2026");
   });
 
-  it("degrades gracefully for a date outside the supplied table's range", () => {
-    const vm = buildViewModel(new Date(Date.UTC(2050, 0, 1)), table);
+  it("degrades gracefully for a date outside either supplied table's range", () => {
+    const vm = buildViewModel(new Date(Date.UTC(2050, 0, 1)), table, todaySummaryTable1962);
     const todaySection = vm.sections[0];
+    expect(todaySection.left.value).toBe("Unknown");
     expect(todaySection.right.value).toBe("Unknown");
   });
 });
