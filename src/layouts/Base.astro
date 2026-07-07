@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import NavMenu from "../components/NavMenu.astro";
 
 interface Props {
   title?: string;
@@ -17,7 +18,7 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta property="og:title" content={title} />
-    <meta property="og:url" content="https://www.catholicfaith.today" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, "https://www.catholicfaith.today").toString()} />
     <meta property="og:type" content="website" />
     <meta property="og:description" content={description} />
     <meta name="description" content={description} />
@@ -26,6 +27,7 @@ const {
   </head>
   <body>
     <div class="page">
+      <NavMenu currentPath={Astro.url.pathname} />
       <slot />
     </div>
   </body>

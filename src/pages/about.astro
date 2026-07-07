@@ -1,0 +1,56 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="About — Catholic Faith Today" description="What Catholic Faith Today compares, how it's built, and where its data comes from.">
+  <header class="site-header">
+    <h1>About</h1>
+    <p class="tagline">What this site compares, and where its data comes from.</p>
+  </header>
+
+  <article class="about-content">
+    <p>
+      Catholic Faith Today puts the Traditional 1962 Roman Catholic calendar (the Extraordinary Form, as used
+      by the Traditional Latin Mass) side by side with the modern Novus Ordo calendar (the Ordinary Form, the
+      General Roman Calendar in ordinary use since Vatican II), so you can see, for any given day, how the two
+      compare.
+    </p>
+
+    <h2>What's compared</h2>
+    <ul>
+      <li><strong>What Is Today</strong> — the day's season, feria or Sunday designation, and liturgical color.</li>
+      <li><strong>Ember Days</strong> — the quarterly 1962 fast days, not observed in the modern calendar.</li>
+      <li><strong>Fasting &amp; Abstinence</strong> — how the two disciplines differ, day by day.</li>
+      <li><strong>Solemnities &amp; Feast Days</strong> — today's status, and what's coming up next on each calendar.</li>
+      <li><strong>Saint of the Day</strong> — who's commemorated on each calendar.</li>
+    </ul>
+    <p>
+      The date picker at the top of the page isn't limited to today, it works for any date within about ten
+      years in either direction, recomputed instantly in your browser.
+    </p>
+
+    <h2>Data &amp; sources</h2>
+    <p>
+      The 1962 calendar's moveable feasts, Ember Days, and major solemnities are computed directly from the
+      date of Easter. Its Saint-of-the-Day list (over 260 entries) was reconstructed from the <a href="https://www.missalemeum.com" target="_blank" rel="noopener noreferrer">Missale Meum</a> API, an
+      MIT-licensed project that computes the real 1962 rubrics.
+    </p>
+    <p>
+      The Novus Ordo calendar is computed with <a href="https://www.npmjs.com/package/romcal" target="_blank" rel="noopener noreferrer">romcal</a>,
+      an open-source liturgical calendar library, using the United States calendar and English locale.
+    </p>
+
+    <h2>Scope &amp; limitations</h2>
+    <p>
+      This is a personal project, kept honest about what it doesn't yet cover. The 1962 side's "What Is Today"
+      season/feria detail is still in progress. The fasting and abstinence rules model the well-established
+      core of each discipline, but don't yet include the historical vigil fasts (Pentecost, the Assumption, All
+      Saints, and Christmas) pending further research.
+    </p>
+  </article>
+
+  <footer class="site-footer">
+    <p>CatholicFaith.Today &mdash; comparing the Extraordinary and Ordinary Forms of the Roman Rite.</p>
+    <p>&copy; {new Date().getUTCFullYear()} Jeff Stempel</p>
+  </footer>
+</Base>
