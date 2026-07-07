@@ -79,6 +79,40 @@ a {
   margin: 0;
 }
 
+.date-picker-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.date-picker-bar input[type="date"] {
+  font: inherit;
+  color: inherit;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+}
+
+.date-picker-bar button {
+  font: inherit;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+
+.date-picker-bar button:hover {
+  border-color: var(--color-accent);
+}
+
 .compare-row {
   margin-bottom: 2.5rem;
 }
