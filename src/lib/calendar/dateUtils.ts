@@ -47,3 +47,15 @@ export function todayUTC(): Date {
   const now = new Date();
   return utcDate(now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate());
 }
+
+/**
+ * Today's calendar date in the caller's own local timezone, packaged as a
+ * UTC-anchored Date so it plugs into the rest of this UTC-based codebase
+ * unchanged. Server-side (Node, at build time) "local" means the build
+ * machine's timezone, which isn't meaningful — use todayUTC() there instead.
+ * This is for client-side code, where "local" is the actual visitor.
+ */
+export function todayLocal(): Date {
+  const now = new Date();
+  return utcDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+}

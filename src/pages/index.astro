@@ -1,144 +1,89 @@
 ---
-import CalendarColumn from "../components/CalendarColumn.astro";
-import CompareRow from "../components/CompareRow.astro";
 import Base from "../layouts/Base.astro";
 import { todayUTC } from "../lib/calendar/dateUtils";
-import { getLiturgicalDay1962, getNextFeastDay } from "../lib/calendar/1962";
-import { getNextEmberDay } from "../lib/calendar/1962/emberDays";
-import { getBothCalendars } from "../lib/calendar/lookup";
-import { getLiturgicalDayNovusOrdo, getNextSolemnity, getTodaySummaryNovusOrdo } from "../lib/calendar/novusOrdo";
-import type { Celebration } from "../lib/calendar/types";
+import { buildNovusOrdoTable } from "../lib/calendar/novusOrdoTable";
+import { renderSections } from "../lib/render";
+import { buildViewModel } from "../lib/viewModel";
 
 const today = todayUTC();
-const { traditional, novusOrdo } = getBothCalendars(today);
+const copyrightYear = today.getUTCFullYear();
 
-const dateLabel = today.toLocaleDateString("en-US", {
-  timeZone: "UTC",
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-});
+const TABLE_YEARS_BEFORE = 10;
+const TABLE_YEARS_AFTER = 10;
+const minYear = copyrightYear - TABLE_YEARS_BEFORE;
+const maxYear = copyrightYear + TABLE_YEARS_AFTER;
+const novusOrdoTable = buildNovusOrdoTable(minYear, maxYear);
+const minDate = `${minYear}-01-01`;
+const maxDate = `${maxYear}-12-31`;
 
-const dateFormatOptions: Intl.DateTimeFormatOptions = {
-  timeZone: "UTC",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-};
+const vm = buildViewModel(today, novusOrdoTable);
 
-const nextEmberDayLabel = getNextEmberDay(today).toLocaleDateString("en-US", dateFormatOptions);
-
-const nextFeastDay = getNextFeastDay(today);
-const nextFeastDayLabel = nextFeastDay.toLocaleDateString("en-US", dateFormatOptions);
-const nextFeastDayName = getLiturgicalDay1962(nextFeastDay).celebrations.find((c) => c.isSolemnity)?.name;
-
-const nextSolemnityDate = getNextSolemnity(today);
-const nextSolemnityLabel = nextSolemnityDate.toLocaleDateString("en-US", dateFormatOptions);
-const nextSolemnityName = getLiturgicalDayNovusOrdo(nextSolemnityDate).celebrations[0]?.name;
-
-const novusOrdoTodaySummary = getTodaySummaryNovusOrdo(today);
-
-const traditionalEmberDay = traditional.celebrations.find((c) => c.isEmberDay);
-const traditionalSolemnity = traditional.celebrations.find((c) => c.isSolemnity);
-const traditionalSaint = traditional.celebrations.find((c: Celebration) => !c.isSolemnity && !c.isEmberDay);
-const novusOrdoCelebration = novusOrdo.celebrations[0] as Celebration | undefined;
+// Embedded for the client script to read without ever loading romcal itself
+// (see novusOrdoLookup.ts). Escape "<" so a stray "</script>"-like sequence
+// in any celebration name can't break out of the tag.
+const novusOrdoTableJson = JSON.stringify(novusOrdoTable).replace(/</g, "\\u003c");
 ---
 
 <Base>
   <header class="site-header">
     <h1>Catholic Faith Today</h1>
-    <p class="tagline">The Traditional 1962 calendar and today's Novus Ordo calendar, side by side — {dateLabel}</p>
+    <p class="tagline">
+      The Traditional 1962 calendar and the Novus Ordo calendar, side by side — <span id="date-label">{vm.dateLabel}</span>
+    </p>
   </header>
 
-  <CompareRow title="What Is Today in the Church Calendar?">
-    <Fragment slot="left">
-      <CalendarColumn
-        label="1962 Calendar"
-        value="Coming Soon"
-        description="This feature is still being worked out."
-        tone="neutral"
-      />
-    </Fragment>
-    <Fragment slot="right">
-      <CalendarColumn
-        label="Novus Ordo"
-        value={novusOrdoTodaySummary.name}
-        description={`Liturgical Color: ${novusOrdoTodaySummary.color}`}
-        tone="neutral"
-      />
-    </Fragment>
-  </CompareRow>
+  <div class="date-picker-bar">
+    <label for="date-input">View a different date</label>
+    <input type="date" id="date-input" value={vm.isoDate} min={minDate} max={maxDate} />
+    <button id="today-button" type="button">Today</button>
+  </div>
 
-  <CompareRow title="Is Today an Ember Day?">
-    <Fragment slot="left">
-      <CalendarColumn
-        label="1962 Calendar"
-        value={traditionalEmberDay ? "Yes!" : "No"}
-        description={traditionalEmberDay?.name ?? "Not an Ember Day today."}
-        tone={traditionalEmberDay ? "yes" : "no"}
-        highlighted={Boolean(traditionalEmberDay)}
-      />
-    </Fragment>
-    <Fragment slot="right">
-      <CalendarColumn
-        label="Novus Ordo"
-        value="No"
-        description="Ember Days are not observed in the current calendar."
-        tone="no"
-      />
-    </Fragment>
-    <Fragment slot="note">
-      <p class="section-note">Next Ember Day: {nextEmberDayLabel}</p>
-    </Fragment>
-  </CompareRow>
-
-  <CompareRow title="Is Today a Solemnity or Feast Day?">
-    <Fragment slot="left">
-      <CalendarColumn
-        label="1962 Calendar"
-        value={traditionalSolemnity ? "Yes!" : "No"}
-        description={traditionalSolemnity?.name ?? "No major feast today."}
-        footnote={`Next Feast Day: ${nextFeastDayName} (${nextFeastDayLabel})`}
-        tone={traditionalSolemnity ? "yes" : "no"}
-        highlighted={Boolean(traditionalSolemnity)}
-      />
-    </Fragment>
-    <Fragment slot="right">
-      <CalendarColumn
-        label="Novus Ordo"
-        value={novusOrdoCelebration?.isSolemnity ? "Yes!" : "No"}
-        description={novusOrdoCelebration?.isSolemnity
-          ? novusOrdoCelebration.name
-          : "No solemnity today."}
-        footnote={`Next Solemnity: ${nextSolemnityName} (${nextSolemnityLabel})`}
-        tone={novusOrdoCelebration?.isSolemnity ? "yes" : "no"}
-        highlighted={novusOrdoCelebration?.isSolemnity}
-      />
-    </Fragment>
-  </CompareRow>
-
-  <CompareRow title="Saint of the Day">
-    <Fragment slot="left">
-      <CalendarColumn
-        label="1962 Calendar"
-        value={traditionalSaint?.name ?? "Not yet recorded"}
-        description={traditionalSaint ? undefined : "Our traditional Saint-of-the-Day list is still growing."}
-        tone="neutral"
-      />
-    </Fragment>
-    <Fragment slot="right">
-      <CalendarColumn
-        label="Novus Ordo"
-        value={novusOrdoCelebration && !novusOrdoCelebration.isSolemnity ? novusOrdoCelebration.name : "—"}
-        description={novusOrdoCelebration?.isSolemnity ? "Today's solemnity is shown above." : undefined}
-        tone="neutral"
-      />
-    </Fragment>
-  </CompareRow>
+  <div id="sections" set:html={renderSections(vm)} />
 
   <footer class="site-footer">
     <p>CatholicFaith.Today &mdash; comparing the Extraordinary and Ordinary Forms of the Roman Rite.</p>
-    <p>&copy; {today.getUTCFullYear()} Jeff Stempel</p>
+    <p>&copy; <span id="copyright-year">{copyrightYear}</span> Jeff Stempel</p>
   </footer>
+
+  <script type="application/json" id="novus-ordo-table" is:inline set:html={novusOrdoTableJson} />
+
+  <script>
+    import { fromISODate, todayLocal } from "../lib/calendar/dateUtils";
+    import type { NovusOrdoTable } from "../lib/calendar/novusOrdoLookup";
+    import { renderSections } from "../lib/render";
+    import { buildViewModel } from "../lib/viewModel";
+
+    const tableEl = document.getElementById("novus-ordo-table")!;
+    const novusOrdoTable: NovusOrdoTable = JSON.parse(tableEl.textContent ?? "{}");
+
+    const sectionsEl = document.getElementById("sections")!;
+    const dateLabelEl = document.getElementById("date-label")!;
+    const copyrightYearEl = document.getElementById("copyright-year")!;
+    const dateInput = document.getElementById("date-input") as HTMLInputElement;
+    const todayButton = document.getElementById("today-button")!;
+
+    function renderFor(date: Date) {
+      const vm = buildViewModel(date, novusOrdoTable);
+      sectionsEl.innerHTML = renderSections(vm);
+      dateLabelEl.textContent = vm.dateLabel;
+      dateInput.value = vm.isoDate;
+    }
+
+    // The page is statically built ahead of time, so its initial content can
+    // be stale by however long it's been since the last deploy — and UTC's
+    // day boundary doesn't line up with the visitor's own midnight anyway.
+    // Immediately recompute using the visitor's own local calendar date to
+    // correct both on every load.
+    copyrightYearEl.textContent = String(todayLocal().getUTCFullYear());
+    renderFor(todayLocal());
+
+    dateInput.addEventListener("change", () => {
+      if (!dateInput.value) return;
+      renderFor(fromISODate(dateInput.value));
+    });
+
+    todayButton.addEventListener("click", () => {
+      renderFor(todayLocal());
+    });
+  </script>
 </Base>

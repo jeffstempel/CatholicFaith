@@ -1,0 +1,144 @@
+import { toISODate } from "./calendar/dateUtils";
+import { getLiturgicalDay1962, getNextFeastDay } from "./calendar/1962";
+import { getNextEmberDay } from "./calendar/1962/emberDays";
+import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./calendar/novusOrdoLookup";
+import type { Celebration } from "./calendar/types";
+
+export interface ColumnViewModel {
+  label: string;
+  value: string;
+  description?: string;
+  footnote?: string;
+  tone: "yes" | "no" | "neutral";
+  highlighted: boolean;
+}
+
+export interface SectionViewModel {
+  title: string;
+  left: ColumnViewModel;
+  right: ColumnViewModel;
+  note?: string;
+}
+
+export interface PageViewModel {
+  isoDate: string;
+  dateLabel: string;
+  sections: SectionViewModel[];
+}
+
+const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  timeZone: "UTC",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+};
+
+function formatDate(date: Date, options: Intl.DateTimeFormatOptions): string {
+  return date.toLocaleDateString("en-US", options);
+}
+
+/**
+ * Builds everything needed to render the page for a given date. Pure and
+ * environment-agnostic (no DOM, no romcal) so it runs identically at build
+ * time (Node) and in the browser (client-side recompute) — the Novus Ordo
+ * side is precomputed into `novusOrdoTable` ahead of time (see
+ * novusOrdoTable.ts) since romcal itself can't run in the browser.
+ */
+export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable): PageViewModel {
+  const traditional = getLiturgicalDay1962(date);
+  const novusOrdoToday = lookupNovusOrdoDay(novusOrdoTable, date);
+
+  const dateLabel = formatDate(date, { ...DATE_FORMAT_OPTIONS, weekday: "long" });
+
+  const nextEmberDayLabel = formatDate(getNextEmberDay(date), DATE_FORMAT_OPTIONS);
+
+  const nextFeastDay = getNextFeastDay(date);
+  const nextFeastDayLabel = formatDate(nextFeastDay, DATE_FORMAT_OPTIONS);
+  const nextFeastDayName = getLiturgicalDay1962(nextFeastDay).celebrations.find((c) => c.isSolemnity)?.name ?? "—";
+
+  const nextSolemnityDate = lookupNextSolemnity(novusOrdoTable, date);
+  const nextSolemnityLabel = nextSolemnityDate ? formatDate(nextSolemnityDate, DATE_FORMAT_OPTIONS) : "—";
+  const nextSolemnityName = (nextSolemnityDate && lookupNovusOrdoDay(novusOrdoTable, nextSolemnityDate)?.name) ?? "—";
+
+  const traditionalEmberDay = traditional.celebrations.find((c) => c.isEmberDay);
+  const traditionalSolemnity = traditional.celebrations.find((c) => c.isSolemnity);
+  const traditionalSaint = traditional.celebrations.find((c: Celebration) => !c.isSolemnity && !c.isEmberDay);
+
+  return {
+    isoDate: toISODate(date),
+    dateLabel,
+    sections: [
+      {
+        title: "What Is Today in the Church Calendar?",
+        left: {
+          label: "1962 Calendar",
+          value: "Coming Soon",
+          description: "This feature is still being worked out.",
+          tone: "neutral",
+          highlighted: false,
+        },
+        right: {
+          label: "Novus Ordo",
+          value: novusOrdoToday?.todaySummaryName ?? "Unknown",
+          description: `Liturgical Color: ${novusOrdoToday?.todaySummaryColor ?? "Unknown"}`,
+          tone: "neutral",
+          highlighted: false,
+        },
+      },
+      {
+        title: "Is Today an Ember Day?",
+        left: {
+          label: "1962 Calendar",
+          value: traditionalEmberDay ? "Yes!" : "No",
+          description: traditionalEmberDay?.name ?? "Not an Ember Day today.",
+          tone: traditionalEmberDay ? "yes" : "no",
+          highlighted: Boolean(traditionalEmberDay),
+        },
+        right: {
+          label: "Novus Ordo",
+          value: "No",
+          description: "Ember Days are not observed in the current calendar.",
+          tone: "no",
+          highlighted: false,
+        },
+        note: `Next Ember Day: ${nextEmberDayLabel}`,
+      },
+      {
+        title: "Is Today a Solemnity or Feast Day?",
+        left: {
+          label: "1962 Calendar",
+          value: traditionalSolemnity ? "Yes!" : "No",
+          description: traditionalSolemnity?.name ?? "No major feast today.",
+          footnote: `Next Feast Day: ${nextFeastDayName} (${nextFeastDayLabel})`,
+          tone: traditionalSolemnity ? "yes" : "no",
+          highlighted: Boolean(traditionalSolemnity),
+        },
+        right: {
+          label: "Novus Ordo",
+          value: novusOrdoToday?.isSolemnity ? "Yes!" : "No",
+          description: novusOrdoToday?.isSolemnity ? novusOrdoToday.name : "No solemnity today.",
+          footnote: `Next Solemnity: ${nextSolemnityName} (${nextSolemnityLabel})`,
+          tone: novusOrdoToday?.isSolemnity ? "yes" : "no",
+          highlighted: Boolean(novusOrdoToday?.isSolemnity),
+        },
+      },
+      {
+        title: "Saint of the Day",
+        left: {
+          label: "1962 Calendar",
+          value: traditionalSaint?.name ?? "Not yet recorded",
+          description: traditionalSaint ? undefined : "Our traditional Saint-of-the-Day list is still growing.",
+          tone: "neutral",
+          highlighted: false,
+        },
+        right: {
+          label: "Novus Ordo",
+          value: novusOrdoToday && !novusOrdoToday.isSolemnity ? novusOrdoToday.name : "—",
+          description: novusOrdoToday?.isSolemnity ? "Today's solemnity is shown above." : undefined,
+          tone: "neutral",
+          highlighted: false,
+        },
+      },
+    ],
+  };
+}
