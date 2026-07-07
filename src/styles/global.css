@@ -1,3 +1,14 @@
+/* UnifrakturMaguntia — SIL Open Font License, self-hosted from Google Fonts
+   (fonts.google.com/specimen/UnifrakturMaguntia) for the site wordmark's
+   traditional blackletter/Bible-lettering look. */
+@font-face {
+  font-family: "UnifrakturMaguntia";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/UnifrakturMaguntia.woff2") format("woff2");
+}
+
 :root {
   --color-bg: #faf6ef;
   --color-bg-raised: #ffffff;
@@ -140,9 +151,12 @@ a {
 }
 
 .site-header h1 {
-  font-size: 2.5rem;
+  font-family: "UnifrakturMaguntia", var(--font-serif);
+  font-size: 3.25rem;
+  font-weight: normal;
   letter-spacing: 0.02em;
-  margin: 0 0 0.4rem;
+  color: var(--color-gold);
+  margin: 0 0 0.5rem;
 }
 
 .site-header .tagline {
