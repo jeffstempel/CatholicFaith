@@ -2,6 +2,7 @@ import { toISODate } from "./calendar/dateUtils";
 import { getLiturgicalDay1962, getNextFeastDay } from "./calendar/1962";
 import { getNextEmberDay } from "./calendar/1962/emberDays";
 import { getFastingAbstinence1962, type FastingAbstinence as FastingAbstinence1962 } from "./calendar/1962/fastingAbstinence";
+import { lookupTodaySummary1962, type TodaySummaryTable1962 } from "./calendar/1962/todaySummaryLookup";
 import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./calendar/novusOrdoLookup";
 import { getFastingAbstinenceNovusOrdo, type FastingAbstinence as FastingAbstinenceNovusOrdo } from "./calendar/novusOrdoFastingAbstinence";
 import type { Celebration } from "./calendar/types";
@@ -90,14 +91,17 @@ function describeFastingNovusOrdo(fa: FastingAbstinenceNovusOrdo): Pick<ColumnVi
 
 /**
  * Builds everything needed to render the page for a given date. Pure and
- * environment-agnostic (no DOM, no romcal) so it runs identically at build
- * time (Node) and in the browser (client-side recompute) — the Novus Ordo
- * side is precomputed into `novusOrdoTable` ahead of time (see
- * novusOrdoTable.ts) since romcal itself can't run in the browser.
+ * environment-agnostic (no DOM, no romcal, no network) so it runs
+ * identically at build time (Node) and in the browser (client-side
+ * recompute) — both the Novus Ordo side (novusOrdoTable.ts, via romcal) and
+ * the 1962 "What Is Today" side (todaySummaryTable.ts, via the Missale Meum
+ * API) are precomputed into plain data tables ahead of time, since neither
+ * romcal nor a live network call can run in the browser.
  */
-export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable): PageViewModel {
+export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable, todaySummaryTable1962: TodaySummaryTable1962): PageViewModel {
   const traditional = getLiturgicalDay1962(date);
   const novusOrdoToday = lookupNovusOrdoDay(novusOrdoTable, date);
+  const traditionalToday = lookupTodaySummary1962(todaySummaryTable1962, date);
 
   const dateLabel = formatDate(date, { ...DATE_FORMAT_OPTIONS, weekday: "long" });
 
@@ -126,8 +130,8 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable): Page
         title: "What Is Today in the Church Calendar?",
         left: {
           label: "1962 Calendar",
-          value: "Coming Soon",
-          description: "This feature is still being worked out.",
+          value: traditionalToday?.name ?? "Unknown",
+          description: `Liturgical Color: ${traditionalToday?.color ?? "Unknown"}`,
           tone: "neutral",
           highlighted: false,
         },

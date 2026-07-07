@@ -33,7 +33,9 @@ import Base from "../layouts/Base.astro";
     <p>
       The 1962 calendar's moveable feasts, Ember Days, and major solemnities are computed directly from the
       date of Easter. Its Saint-of-the-Day list (over 260 entries) was reconstructed from the <a href="https://www.missalemeum.com" target="_blank" rel="noopener noreferrer">Missale Meum</a> API, an
-      MIT-licensed project that computes the real 1962 rubrics.
+      MIT-licensed project that computes the real 1962 rubrics. The same API supplies the 1962 side's "What Is
+      Today" season/feria designation and liturgical color, refreshed on every build since — unlike the fixed
+      Saint-of-the-Day list — it depends on where Easter falls that year.
     </p>
     <p>
       The Novus Ordo calendar is computed with <a href="https://www.npmjs.com/package/romcal" target="_blank" rel="noopener noreferrer">romcal</a>,
@@ -42,10 +44,9 @@ import Base from "../layouts/Base.astro";
 
     <h2>Scope &amp; limitations</h2>
     <p>
-      This is a personal project, kept honest about what it doesn't yet cover. The 1962 side's "What Is Today"
-      season/feria detail is still in progress. The fasting and abstinence rules model the well-established
-      core of each discipline, but don't yet include the historical vigil fasts (Pentecost, the Assumption, All
-      Saints, and Christmas) pending further research.
+      This is a personal project, kept honest about what it doesn't yet cover. The fasting and abstinence rules
+      model the well-established core of each discipline, but don't yet include the historical vigil fasts
+      (Pentecost, the Assumption, All Saints, and Christmas) pending further research.
     </p>
   </article>
 

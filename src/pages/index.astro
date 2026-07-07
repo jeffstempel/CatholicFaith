@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import { todayUTC } from "../lib/calendar/dateUtils";
+import { buildTodaySummaryTable1962 } from "../lib/calendar/1962/todaySummaryTable";
 import { buildNovusOrdoTable } from "../lib/calendar/novusOrdoTable";
 import { renderSections } from "../lib/render";
 import { buildViewModel } from "../lib/viewModel";
@@ -13,15 +14,18 @@ const TABLE_YEARS_AFTER = 10;
 const minYear = copyrightYear - TABLE_YEARS_BEFORE;
 const maxYear = copyrightYear + TABLE_YEARS_AFTER;
 const novusOrdoTable = buildNovusOrdoTable(minYear, maxYear);
+const todaySummaryTable1962 = await buildTodaySummaryTable1962(minYear, maxYear);
 const minDate = `${minYear}-01-01`;
 const maxDate = `${maxYear}-12-31`;
 
-const vm = buildViewModel(today, novusOrdoTable);
+const vm = buildViewModel(today, novusOrdoTable, todaySummaryTable1962);
 
-// Embedded for the client script to read without ever loading romcal itself
-// (see novusOrdoLookup.ts). Escape "<" so a stray "</script>"-like sequence
-// in any celebration name can't break out of the tag.
+// Embedded for the client script to read without ever loading romcal (or
+// making a live network call) itself — see novusOrdoLookup.ts and
+// todaySummaryLookup.ts. Escape "<" so a stray "</script>"-like sequence in
+// any celebration name can't break out of the tag.
 const novusOrdoTableJson = JSON.stringify(novusOrdoTable).replace(/</g, "\\u003c");
+const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(/</g, "\\u003c");
 ---
 
 <Base>
@@ -46,15 +50,20 @@ const novusOrdoTableJson = JSON.stringify(novusOrdoTable).replace(/</g, "\\u003c
   </footer>
 
   <script type="application/json" id="novus-ordo-table" is:inline set:html={novusOrdoTableJson} />
+  <script type="application/json" id="today-summary-table-1962" is:inline set:html={todaySummaryTable1962Json} />
 
   <script>
     import { fromISODate, todayLocal } from "../lib/calendar/dateUtils";
     import type { NovusOrdoTable } from "../lib/calendar/novusOrdoLookup";
+    import type { TodaySummaryTable1962 } from "../lib/calendar/1962/todaySummaryLookup";
     import { renderSections } from "../lib/render";
     import { buildViewModel } from "../lib/viewModel";
 
     const tableEl = document.getElementById("novus-ordo-table")!;
     const novusOrdoTable: NovusOrdoTable = JSON.parse(tableEl.textContent ?? "{}");
+
+    const todaySummaryTableEl = document.getElementById("today-summary-table-1962")!;
+    const todaySummaryTable1962: TodaySummaryTable1962 = JSON.parse(todaySummaryTableEl.textContent ?? "{}");
 
     const sectionsEl = document.getElementById("sections")!;
     const dateLabelEl = document.getElementById("date-label")!;
@@ -63,7 +72,7 @@ const novusOrdoTableJson = JSON.stringify(novusOrdoTable).replace(/</g, "\\u003c
     const todayButton = document.getElementById("today-button")!;
 
     function renderFor(date: Date) {
-      const vm = buildViewModel(date, novusOrdoTable);
+      const vm = buildViewModel(date, novusOrdoTable, todaySummaryTable1962);
       sectionsEl.innerHTML = renderSections(vm);
       dateLabelEl.textContent = vm.dateLabel;
       dateInput.value = vm.isoDate;
