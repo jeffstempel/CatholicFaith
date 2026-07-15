@@ -3,7 +3,7 @@ import { toISODate } from "../dateUtils";
 /**
  * Pure, dependency-free lookup over a precomputed table (see
  * todaySummaryTable.ts for how it's built) — safe to ship to the browser for
- * the client-side date picker, same pattern as novusOrdoLookup.ts.
+ * the client-side date picker, same pattern as ../novusOrdo/lookup.ts.
  */
 export interface TodaySummaryEntry1962 {
   name: string;

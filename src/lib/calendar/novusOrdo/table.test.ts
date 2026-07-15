@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "vitest";
-import { buildNovusOrdoTable } from "./novusOrdoTable";
-import { getLiturgicalDayNovusOrdo, getTodaySummaryNovusOrdo } from "./novusOrdo";
-import type { NovusOrdoTable } from "./novusOrdoLookup";
+import { buildNovusOrdoTable } from "./table";
+import { getLiturgicalDayNovusOrdo, getTodaySummaryNovusOrdo } from "./index";
+import type { NovusOrdoTable } from "./lookup";
 
 describe("buildNovusOrdoTable", () => {
   let table: NovusOrdoTable;

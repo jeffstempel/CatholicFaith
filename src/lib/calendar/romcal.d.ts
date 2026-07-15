@@ -1,6 +1,6 @@
 /**
  * `romcal` ships no TypeScript types. This is a minimal ambient declaration
- * covering only the surface `novusOrdo.ts` actually uses.
+ * covering only the surface `novusOrdo/index.ts` actually uses.
  */
 declare module "romcal" {
   export interface RomcalCelebration {

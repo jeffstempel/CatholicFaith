@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getLiturgicalDayNovusOrdo, getNextSolemnity, getTodaySummaryNovusOrdo } from "./novusOrdo";
-import { toISODate } from "./dateUtils";
+import { getLiturgicalDayNovusOrdo, getNextSolemnity, getTodaySummaryNovusOrdo } from "./index";
+import { toISODate } from "../dateUtils";
 
 describe("getLiturgicalDayNovusOrdo", () => {
   it("identifies Christmas as a Solemnity", () => {
