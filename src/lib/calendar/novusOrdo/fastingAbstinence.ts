@@ -1,5 +1,5 @@
-import { gregorianEaster } from "./computus";
-import { addDays, dayOfWeek } from "./dateUtils";
+import { gregorianEaster } from "../computus";
+import { addDays, dayOfWeek } from "../dateUtils";
 
 export type AbstinenceLevel = "none" | "recommended" | "full";
 

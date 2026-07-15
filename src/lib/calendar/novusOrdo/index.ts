@@ -1,6 +1,6 @@
 import { calendarFor, Seasons, type RomcalCelebration, type RomcalSeasonDay } from "romcal";
-import { fromISODate, toISODate } from "./dateUtils";
-import type { Celebration, LiturgicalDay } from "./types";
+import { fromISODate, toISODate } from "../dateUtils";
+import type { Celebration, LiturgicalDay } from "../types";
 
 const RANK_BY_ROMCAL_TYPE: Record<string, string> = {
   SOLEMNITY: "solemnity",

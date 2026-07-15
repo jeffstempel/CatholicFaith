@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./novusOrdoLookup";
-import { toISODate } from "./dateUtils";
+import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./lookup";
+import { toISODate } from "../dateUtils";
 
 const table: NovusOrdoTable = {
   "2025-12-01": { name: "1st Sunday of Advent", isSolemnity: false, todaySummaryName: "1st Sunday of Advent", todaySummaryColor: "Purple" },

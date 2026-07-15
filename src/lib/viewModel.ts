@@ -3,8 +3,8 @@ import { getLiturgicalDay1962, getNextFeastDay } from "./calendar/1962";
 import { getNextEmberDay } from "./calendar/1962/emberDays";
 import { getFastingAbstinence1962, type FastingAbstinence as FastingAbstinence1962 } from "./calendar/1962/fastingAbstinence";
 import { lookupTodaySummary1962, type TodaySummaryTable1962 } from "./calendar/1962/todaySummaryLookup";
-import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./calendar/novusOrdoLookup";
-import { getFastingAbstinenceNovusOrdo, type FastingAbstinence as FastingAbstinenceNovusOrdo } from "./calendar/novusOrdoFastingAbstinence";
+import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./calendar/novusOrdo/lookup";
+import { getFastingAbstinenceNovusOrdo, type FastingAbstinence as FastingAbstinenceNovusOrdo } from "./calendar/novusOrdo/fastingAbstinence";
 import type { Celebration } from "./calendar/types";
 
 export interface ColumnViewModel {
@@ -93,10 +93,10 @@ function describeFastingNovusOrdo(fa: FastingAbstinenceNovusOrdo): Pick<ColumnVi
  * Builds everything needed to render the page for a given date. Pure and
  * environment-agnostic (no DOM, no romcal, no network) so it runs
  * identically at build time (Node) and in the browser (client-side
- * recompute) — both the Novus Ordo side (novusOrdoTable.ts, via romcal) and
- * the 1962 "What Is Today" side (todaySummaryTable.ts, via the Missale Meum
- * API) are precomputed into plain data tables ahead of time, since neither
- * romcal nor a live network call can run in the browser.
+ * recompute) — both the Novus Ordo side (calendar/novusOrdo/table.ts, via
+ * romcal) and the 1962 "What Is Today" side (calendar/1962/todaySummaryTable.ts,
+ * via the Missale Meum API) are precomputed into plain data tables ahead of
+ * time, since neither romcal nor a live network call can run in the browser.
  */
 export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable, todaySummaryTable1962: TodaySummaryTable1962): PageViewModel {
   const traditional = getLiturgicalDay1962(date);

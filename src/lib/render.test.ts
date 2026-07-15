@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeAll } from "vitest";
 import { renderSections } from "./render";
 import { buildViewModel } from "./viewModel";
-import { buildNovusOrdoTable } from "./calendar/novusOrdoTable";
-import type { NovusOrdoTable } from "./calendar/novusOrdoLookup";
+import { buildNovusOrdoTable } from "./calendar/novusOrdo/table";
+import type { NovusOrdoTable } from "./calendar/novusOrdo/lookup";
 import type { TodaySummaryTable1962 } from "./calendar/1962/todaySummaryLookup";
 import type { PageViewModel } from "./viewModel";
 

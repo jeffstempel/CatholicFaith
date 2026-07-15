@@ -2,7 +2,7 @@
 import Base from "../layouts/Base.astro";
 import { todayUTC } from "../lib/calendar/dateUtils";
 import { buildTodaySummaryTable1962 } from "../lib/calendar/1962/todaySummaryTable";
-import { buildNovusOrdoTable } from "../lib/calendar/novusOrdoTable";
+import { buildNovusOrdoTable } from "../lib/calendar/novusOrdo/table";
 import { renderSections } from "../lib/render";
 import { buildViewModel } from "../lib/viewModel";
 
@@ -21,9 +21,9 @@ const maxDate = `${maxYear}-12-31`;
 const vm = buildViewModel(today, novusOrdoTable, todaySummaryTable1962);
 
 // Embedded for the client script to read without ever loading romcal (or
-// making a live network call) itself — see novusOrdoLookup.ts and
-// todaySummaryLookup.ts. Escape "<" so a stray "</script>"-like sequence in
-// any celebration name can't break out of the tag.
+// making a live network call) itself — see calendar/novusOrdo/lookup.ts and
+// calendar/1962/todaySummaryLookup.ts. Escape "<" so a stray "</script>"-like
+// sequence in any celebration name can't break out of the tag.
 const novusOrdoTableJson = JSON.stringify(novusOrdoTable).replace(/</g, "\\u003c");
 const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(/</g, "\\u003c");
 ---
@@ -54,7 +54,7 @@ const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(
 
   <script>
     import { fromISODate, todayLocal, toISODate } from "../lib/calendar/dateUtils";
-    import type { NovusOrdoTable } from "../lib/calendar/novusOrdoLookup";
+    import type { NovusOrdoTable } from "../lib/calendar/novusOrdo/lookup";
     import type { TodaySummaryTable1962 } from "../lib/calendar/1962/todaySummaryLookup";
     import { renderSections } from "../lib/render";
     import { buildViewModel } from "../lib/viewModel";

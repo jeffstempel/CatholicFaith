@@ -1,11 +1,11 @@
-import { fromISODate, toISODate } from "./dateUtils";
+import { fromISODate, toISODate } from "../dateUtils";
 
 /**
  * Deliberately dependency-free (no romcal/moment/lodash): `romcal`'s
  * `moment-recur` dependency fails to register its plugin when bundled for
  * the browser ("Cannot set properties of undefined (setting 'recur')"),
  * confirmed against a real production build, not just a dev-server quirk.
- * So romcal only ever runs in Node (see novusOrdoTable.ts) and its output is
+ * So romcal only ever runs in Node (see table.ts) and its output is
  * precomputed once into a plain data table that this pure lookup operates on
  * — safe to ship to the browser for the client-side date picker.
  */

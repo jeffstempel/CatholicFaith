@@ -1,11 +1,11 @@
-import { toISODate } from "./dateUtils";
-import { getLiturgicalDayNovusOrdo, getTodaySummaryNovusOrdo } from "./novusOrdo";
-import type { NovusOrdoTable } from "./novusOrdoLookup";
+import { toISODate } from "../dateUtils";
+import { getLiturgicalDayNovusOrdo, getTodaySummaryNovusOrdo } from "./index";
+import type { NovusOrdoTable } from "./lookup";
 
 /**
  * Node-only: precomputes the Novus Ordo table for [startYear, endYear] by
  * calling romcal once at build time, so the browser never needs romcal at
- * all (see novusOrdoLookup.ts for why). Do not import this from client-side
+ * all (see lookup.ts for why). Do not import this from client-side
  * code — it pulls in romcal/moment/lodash.
  */
 export function buildNovusOrdoTable(startYear: number, endYear: number): NovusOrdoTable {
