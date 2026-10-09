@@ -91,13 +91,14 @@ function describeFastingNovusOrdo(fa: FastingAbstinenceNovusOrdo): Pick<ColumnVi
   return { value: "No Obligation", description: "No fasting or abstinence obligation today.", tone: "no", highlighted: false };
 }
 
-const ASCENSION_THURSDAY_PROVINCES = "Boston, Hartford, New York, Newark, Omaha and Philadelphia";
+const ASCENSION_THURSDAY_PROVINCES = "Boston, Hartford, New York, Omaha and Philadelphia";
 
 /**
  * romcal's US calendar keeps the Ascension on Thursday, 39 days after
  * Easter, and so does this site. Most US dioceses, though, transfer it to
- * the following Sunday; only the six ecclesiastical provinces above keep
- * Thursday. This note says so on both days.
+ * the following Sunday; only the five ecclesiastical provinces above keep
+ * Thursday (per the USCCB's annual liturgical calendar, e.g.
+ * usccb.org/resources/2026cal.pdf). This note says so on both days.
  */
 function ascensionTransferNote(date: Date): string | undefined {
   const ascensionThursday = addDays(gregorianEaster(date.getUTCFullYear()), 39);

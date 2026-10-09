@@ -59,14 +59,14 @@ describe("buildViewModel", () => {
     const feastSection = vm.sections[3];
     expect(feastSection.right.description).toBe("Ascension of the Lord");
     expect(feastSection.note).toBe(
-      "In most US dioceses, the Ascension is celebrated on Sunday, May 17, 2026. It stays on Thursday in the provinces of Boston, Hartford, New York, Newark, Omaha and Philadelphia.",
+      "In most US dioceses, the Ascension is celebrated on Sunday, May 17, 2026. It stays on Thursday in the provinces of Boston, Hartford, New York, Omaha and Philadelphia.",
     );
   });
 
   it("notes on the following Sunday that most US dioceses celebrate Ascension Thursday today", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 4, 17)), table, todaySummaryTable1962); // Sun, May 17
     expect(vm.sections[3].note).toBe(
-      "In most US dioceses, Ascension Thursday (May 14, 2026) is celebrated today. The provinces of Boston, Hartford, New York, Newark, Omaha and Philadelphia keep it on Thursday.",
+      "In most US dioceses, Ascension Thursday (May 14, 2026) is celebrated today. The provinces of Boston, Hartford, New York, Omaha and Philadelphia keep it on Thursday.",
     );
   });
 
