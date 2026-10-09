@@ -5,6 +5,7 @@ import { getFastingAbstinence1962, type FastingAbstinence as FastingAbstinence19
 import { lookupTodaySummary1962, type TodaySummaryTable1962 } from "./calendar/1962/todaySummaryLookup";
 import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./calendar/novusOrdo/lookup";
 import { getFastingAbstinenceNovusOrdo, type FastingAbstinence as FastingAbstinenceNovusOrdo } from "./calendar/novusOrdo/fastingAbstinence";
+import { findPatronage } from "./calendar/patronage";
 import type { Celebration } from "./calendar/types";
 
 export interface ColumnViewModel {
@@ -87,6 +88,11 @@ function describeFastingNovusOrdo(fa: FastingAbstinenceNovusOrdo): Pick<ColumnVi
     };
   }
   return { value: "No Obligation", description: "No fasting or abstinence obligation today.", tone: "no", highlighted: false };
+}
+
+function patronageFootnote(celebrationName: string): string | undefined {
+  const patronOf = findPatronage(celebrationName);
+  return patronOf ? `Patron of: ${patronOf}` : undefined;
 }
 
 /**
@@ -205,6 +211,7 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable, today
           label: "1962 Calendar",
           value: traditionalSaint?.name ?? "Not yet recorded",
           description: traditionalSaint ? undefined : "Our traditional Saint-of-the-Day list is still growing.",
+          footnote: traditionalSaint ? patronageFootnote(traditionalSaint.name) : undefined,
           tone: "neutral",
           highlighted: false,
         },
@@ -212,6 +219,7 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable, today
           label: "Novus Ordo",
           value: novusOrdoToday && !novusOrdoToday.isSolemnity ? novusOrdoToday.name : "—",
           description: novusOrdoToday?.isSolemnity ? "Today's solemnity is shown above." : undefined,
+          footnote: novusOrdoToday && !novusOrdoToday.isSolemnity ? patronageFootnote(novusOrdoToday.name) : undefined,
           tone: "neutral",
           highlighted: false,
         },

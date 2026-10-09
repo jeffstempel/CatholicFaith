@@ -15,7 +15,7 @@ describe("buildViewModel", () => {
   let table: NovusOrdoTable;
 
   beforeAll(() => {
-    table = buildNovusOrdoTable(2026, 2026);
+    table = buildNovusOrdoTable(2025, 2026);
   });
 
   it("produces the today-summary, ember day, fasting, solemnity/feast, and saint sections in order", () => {
@@ -96,6 +96,23 @@ describe("buildViewModel", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     expect(vm.isoDate).toBe("2026-07-06");
     expect(vm.dateLabel).toBe("Monday, July 6, 2026");
+  });
+
+  it("shows a patron-of footnote on both calendars for a curated saint", () => {
+    const vm = buildViewModel(new Date(Date.UTC(2025, 11, 6)), table, todaySummaryTable1962); // St. Nicholas (Sat, not overridden by a Sunday)
+    const saintSection = vm.sections[4];
+    expect(saintSection.left.value).toBe("St. Nicholas");
+    expect(saintSection.left.footnote).toBe("Patron of: Children and sailors");
+    expect(saintSection.right.value).toMatch(/Nicholas/);
+    expect(saintSection.right.footnote).toBe("Patron of: Children and sailors");
+  });
+
+  it("omits the patron-of footnote for the ambiguous 1962 St. Boniface but shows it for Novus Ordo", () => {
+    const vm = buildViewModel(new Date(Date.UTC(2026, 5, 5)), table, todaySummaryTable1962); // June 5
+    const saintSection = vm.sections[4];
+    expect(saintSection.left.value).toBe("St. Boniface");
+    expect(saintSection.left.footnote).toBeUndefined();
+    expect(saintSection.right.footnote).toBe("Patron of: Germany");
   });
 
   it("degrades gracefully for a date outside either supplied table's range", () => {
