@@ -54,6 +54,29 @@ describe("buildViewModel", () => {
     expect(feastSection.right.footnote).toMatch(/Next Solemnity: The Assumption of the Blessed Virgin Mary/);
   });
 
+  it("keeps the Ascension on Thursday with a note that most US dioceses celebrate it Sunday", () => {
+    const vm = buildViewModel(new Date(Date.UTC(2026, 4, 14)), table, todaySummaryTable1962); // Thu, May 14
+    const feastSection = vm.sections[3];
+    expect(feastSection.right.description).toBe("Ascension of the Lord");
+    expect(feastSection.note).toBe(
+      "In most US dioceses, the Ascension is celebrated on Sunday, May 17, 2026. It stays on Thursday in the provinces of Boston, Hartford, New York, Omaha and Philadelphia.",
+    );
+  });
+
+  it("notes on the following Sunday that most US dioceses celebrate Ascension Thursday today", () => {
+    const vm = buildViewModel(new Date(Date.UTC(2026, 4, 17)), table, todaySummaryTable1962); // Sun, May 17
+    expect(vm.sections[3].note).toBe(
+      "In most US dioceses, Ascension Thursday (May 14, 2026) is celebrated today. The provinces of Boston, Hartford, New York, Omaha and Philadelphia keep it on Thursday.",
+    );
+  });
+
+  it("has no Ascension note on other days", () => {
+    for (const day of [13, 15, 16, 18]) {
+      const vm = buildViewModel(new Date(Date.UTC(2026, 4, day)), table, todaySummaryTable1962);
+      expect(vm.sections[3].note).toBeUndefined();
+    }
+  });
+
   it("shows the saint of the day on both calendars", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     const saintSection = vm.sections[4];

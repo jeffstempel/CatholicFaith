@@ -1,4 +1,5 @@
-import { toISODate } from "./calendar/dateUtils";
+import { gregorianEaster } from "./calendar/computus";
+import { addDays, toISODate } from "./calendar/dateUtils";
 import { getLiturgicalDay1962, getNextFeastDay } from "./calendar/1962";
 import { getNextEmberDay } from "./calendar/1962/emberDays";
 import { getFastingAbstinence1962, type FastingAbstinence as FastingAbstinence1962 } from "./calendar/1962/fastingAbstinence";
@@ -88,6 +89,28 @@ function describeFastingNovusOrdo(fa: FastingAbstinenceNovusOrdo): Pick<ColumnVi
     };
   }
   return { value: "No Obligation", description: "No fasting or abstinence obligation today.", tone: "no", highlighted: false };
+}
+
+const ASCENSION_THURSDAY_PROVINCES = "Boston, Hartford, New York, Omaha and Philadelphia";
+
+/**
+ * romcal's US calendar keeps the Ascension on Thursday, 39 days after
+ * Easter, and so does this site. Most US dioceses, though, transfer it to
+ * the following Sunday; only the five ecclesiastical provinces above keep
+ * Thursday (per the USCCB's annual liturgical calendar, e.g.
+ * usccb.org/resources/2026cal.pdf). This note says so on both days.
+ */
+function ascensionTransferNote(date: Date): string | undefined {
+  const ascensionThursday = addDays(gregorianEaster(date.getUTCFullYear()), 39);
+  const ascensionSunday = addDays(ascensionThursday, 3);
+  const isoDate = toISODate(date);
+  if (isoDate === toISODate(ascensionThursday)) {
+    return `In most US dioceses, the Ascension is celebrated on Sunday, ${formatDate(ascensionSunday, DATE_FORMAT_OPTIONS)}. It stays on Thursday in the provinces of ${ASCENSION_THURSDAY_PROVINCES}.`;
+  }
+  if (isoDate === toISODate(ascensionSunday)) {
+    return `In most US dioceses, Ascension Thursday (${formatDate(ascensionThursday, DATE_FORMAT_OPTIONS)}) is celebrated today. The provinces of ${ASCENSION_THURSDAY_PROVINCES} keep it on Thursday.`;
+  }
+  return undefined;
 }
 
 function patronageFootnote(celebrationName: string): string | undefined {
@@ -204,6 +227,7 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable, today
           tone: novusOrdoToday?.isSolemnity ? "yes" : "no",
           highlighted: Boolean(novusOrdoToday?.isSolemnity),
         },
+        note: ascensionTransferNote(date),
       },
       {
         title: "Saint of the Day",
