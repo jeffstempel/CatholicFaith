@@ -3,9 +3,11 @@ import { addDays, toISODate } from "./calendar/dateUtils";
 import { getLiturgicalDay1962, getNextFeastDay } from "./calendar/1962";
 import { getNextEmberDay } from "./calendar/1962/emberDays";
 import { getFastingAbstinence1962, type FastingAbstinence as FastingAbstinence1962 } from "./calendar/1962/fastingAbstinence";
+import { getHolyDayOfObligation1917, getNextHolyDayOfObligation1917, type HolyDayOfObligation1917 } from "./calendar/1962/holyDaysOfObligation";
 import { lookupTodaySummary1962, type TodaySummaryTable1962 } from "./calendar/1962/todaySummaryLookup";
 import { lookupNextSolemnity, lookupNovusOrdoDay, type NovusOrdoTable } from "./calendar/novusOrdo/lookup";
 import { getFastingAbstinenceNovusOrdo, type FastingAbstinence as FastingAbstinenceNovusOrdo } from "./calendar/novusOrdo/fastingAbstinence";
+import { getHolyDayOfObligationUS, getNextHolyDayOfObligationUS, type HolyDayOfObligationUS } from "./calendar/novusOrdo/holyDaysOfObligation";
 import { findPatronage } from "./calendar/patronage";
 import type { Celebration } from "./calendar/types";
 
@@ -113,6 +115,86 @@ function ascensionTransferNote(date: Date): string | undefined {
   return undefined;
 }
 
+// The footnote is left for "Next Holy Day", like the other rows' "Next ..." footnotes.
+type ObligationColumn = Pick<ColumnViewModel, "value" | "description" | "tone" | "highlighted">;
+
+const OBLIGATORY = { value: "Yes!", tone: "yes", highlighted: true } as const;
+const NOT_OBLIGATORY = { value: "No", description: "Not a holy day of obligation.", tone: "no", highlighted: false } as const;
+const EVERY_SUNDAY = "Every Sunday is a day of obligation.";
+
+function feastDescription(feast: string, isSunday: boolean, ...notes: (string | false)[]): string {
+  const name = isSunday ? `${feast} (also a Sunday)` : feast;
+  const extra = notes.filter(Boolean);
+  return extra.length > 0 ? `${name}. ${extra.join(" ")}` : name;
+}
+
+function describeObligation1917(h: HolyDayOfObligation1917): ObligationColumn {
+  if (h.feast) {
+    return {
+      ...OBLIGATORY,
+      description: feastDescription(
+        h.feast,
+        h.isSunday,
+        h.notKeptInUS && "In the US, this was not kept as a holy day under the 1917 Code.",
+        h.stJosephFeastMoved &&
+          "When March 19 is a Sunday or in Holy Week, the 1962 calendar moves the feast itself; the obligation is shown on March 19.",
+      ),
+    };
+  }
+  if (h.isSunday) return { ...OBLIGATORY, description: EVERY_SUNDAY };
+  return NOT_OBLIGATORY;
+}
+
+function describeObligationUS(h: HolyDayOfObligationUS, date: Date): ObligationColumn {
+  switch (h.status) {
+    case "abrogated":
+      return {
+        value: "No",
+        description: `${h.feast} falls on a ${h.abrogatedOn} this year, so the obligation is lifted.`,
+        tone: "no",
+        highlighted: false,
+      };
+    case "provincesOnly":
+      return {
+        value: "Only in Some Provinces",
+        description: `${h.feast}: a holy day only in the provinces of ${ASCENSION_THURSDAY_PROVINCES}. Elsewhere it moves to Sunday, ${formatDate(addDays(date, 3), DATE_FORMAT_OPTIONS)}.`,
+        tone: "neutral",
+        highlighted: false,
+      };
+    case "none":
+      return NOT_OBLIGATORY;
+    case "obligatory":
+      if (h.transfer === "toMonday") {
+        return { ...OBLIGATORY, description: `Sunday. The ${h.feast} moves to Monday this year, and is also a day of obligation.` };
+      }
+      if (h.transfer === "fromSunday") return { ...OBLIGATORY, description: `${h.feast}, moved from Sunday` };
+      if (h.transfer === "fromThursday") return { ...OBLIGATORY, description: `Sunday, and in most US dioceses also the ${h.feast}` };
+      if (h.feast) {
+        return {
+          ...OBLIGATORY,
+          description: feastDescription(
+            h.feast,
+            h.isSunday,
+            h.notObligatoryInHonolulu &&
+              "Not a holy day in the Diocese of Honolulu, which keeps only Christmas and the Immaculate Conception.",
+          ),
+        };
+      }
+      return { ...OBLIGATORY, description: EVERY_SUNDAY };
+  }
+}
+
+function nextHolyDayFootnote1917(date: Date): string {
+  const next = getNextHolyDayOfObligation1917(date);
+  return `Next Holy Day: ${next.feast} (${formatDate(next.date, DATE_FORMAT_OPTIONS)})`;
+}
+
+function nextHolyDayFootnoteUS(date: Date): string {
+  const next = getNextHolyDayOfObligationUS(date);
+  const where = next.ascensionTransferred ? " in most US dioceses" : "";
+  return `Next Holy Day: ${next.feast} (${formatDate(next.date, DATE_FORMAT_OPTIONS)}${where})`;
+}
+
 function patronageFootnote(celebrationName: string): string | undefined {
   const patronOf = findPatronage(celebrationName);
   return patronOf ? `Patron of: ${patronOf}` : undefined;
@@ -150,6 +232,8 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable, today
 
   const fasting1962 = describeFasting1962(getFastingAbstinence1962(date));
   const fastingNovusOrdo = describeFastingNovusOrdo(getFastingAbstinenceNovusOrdo(date));
+  const obligation1917 = describeObligation1917(getHolyDayOfObligation1917(date));
+  const obligationUS = describeObligationUS(getHolyDayOfObligationUS(date), date);
 
   return {
     isoDate: toISODate(date),
@@ -208,6 +292,12 @@ export function buildViewModel(date: Date, novusOrdoTable: NovusOrdoTable, today
           tone: fastingNovusOrdo.tone,
           highlighted: fastingNovusOrdo.highlighted,
         },
+      },
+      {
+        title: "Is Today a Holy Day of Obligation?",
+        left: { label: "1917 Code (historical)", ...obligation1917, footnote: nextHolyDayFootnote1917(date) },
+        right: { label: "Current Law (US)", ...obligationUS, footnote: nextHolyDayFootnoteUS(date) },
+        note: "The current Code of Canon Law (1983) binds all Catholics, whichever form of the Mass they attend. The 1917 column is shown for reference.",
       },
       {
         title: "Is Today a Solemnity or Feast Day?",
