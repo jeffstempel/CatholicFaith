@@ -9,7 +9,8 @@
     "astro": "astro",
     "check": "astro check",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "refresh:1962": "node scripts/refresh1962.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

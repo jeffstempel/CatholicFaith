@@ -1,7 +1,8 @@
 ---
 import Base from "../layouts/Base.astro";
 import { todayUTC } from "../lib/calendar/dateUtils";
-import { buildTodaySummaryTable1962 } from "../lib/calendar/1962/todaySummaryTable";
+import { selectTodaySummaryYears1962 } from "../lib/calendar/1962/todaySummaryTable";
+import savedTodaySummaryTable1962 from "../lib/calendar/1962/todaySummaryTable1962.json";
 import { buildNovusOrdoTable } from "../lib/calendar/novusOrdo/table";
 import { renderSections } from "../lib/render";
 import { buildViewModel } from "../lib/viewModel";
@@ -14,7 +15,7 @@ const TABLE_YEARS_AFTER = 10;
 const minYear = copyrightYear - TABLE_YEARS_BEFORE;
 const maxYear = copyrightYear + TABLE_YEARS_AFTER;
 const novusOrdoTable = buildNovusOrdoTable(minYear, maxYear);
-const todaySummaryTable1962 = await buildTodaySummaryTable1962(minYear, maxYear);
+const todaySummaryTable1962 = selectTodaySummaryYears1962(savedTodaySummaryTable1962, minYear, maxYear);
 const minDate = `${minYear}-01-01`;
 const maxDate = `${maxYear}-12-31`;
 

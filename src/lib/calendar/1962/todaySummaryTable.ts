@@ -1,19 +1,17 @@
 import type { TodaySummaryTable1962 } from "./todaySummaryLookup";
 
 /**
- * Node-only: precomputes "what is today" (the temporal/moveable designation
- * and liturgical color) for the 1962 calendar by calling the Missale Meum
- * API (missalemeum.com, MIT licensed) at build time.
+ * Node-only: "what is today" (the temporal/moveable designation and
+ * liturgical color) for the 1962 calendar, from the Missale Meum API
+ * (missalemeum.com, MIT licensed).
  *
- * Unlike the Sanctorale (saintsSeed.ts), this can't be fetched once and
- * vendored forever — the temporal designation for a given civil date
- * depends on where that year's Easter falls, so it must be regenerated
- * every build for whatever date range the picker currently covers.
- *
- * If a given year's request fails (the API is down, network issue), that
- * year is skipped with a logged warning rather than failing the whole
- * build — the "What Is Today" 1962 column just falls back to unavailable
- * for those dates instead of blocking deployment.
+ * The answer for any given year never changes — the 1962 rubrics are a
+ * closed historical document — so rather than calling the API on every
+ * build, a wide range of years is fetched once by `npm run refresh:1962`
+ * (scripts/refresh1962.ts) and committed as todaySummaryTable1962.json.
+ * The build only reads that file (selectTodaySummaryYears1962), so it never
+ * depends on the API being up, and fails loudly if a year it needs isn't
+ * in the file rather than deploying with gaps.
  */
 const COLOR_NAMES: Record<string, string> = {
   w: "White",
@@ -30,38 +28,77 @@ interface MissaleMeumDay {
   colors: string[];
 }
 
-async function fetchYear(
-  year: number,
-  fetchImpl: typeof fetch,
-): Promise<[year: number, days: MissaleMeumDay[]] | undefined> {
-  try {
-    const res = await fetchImpl(`https://www.missalemeum.com/en/api/v5/calendar/${year}`);
-    if (!res.ok) {
-      console.warn(`Missale Meum API returned ${res.status} for year ${year}; skipping.`);
-      return undefined;
-    }
-    return [year, await res.json()];
-  } catch (err) {
-    console.warn(`Failed to fetch Missale Meum data for year ${year}; skipping.`, err);
-    return undefined;
-  }
+export interface FetchOptions {
+  fetchImpl?: typeof fetch;
+  attempts?: number;
+  retryDelayMs?: number;
 }
 
-export async function buildTodaySummaryTable1962(
+async function fetchYear(year: number, { fetchImpl = fetch, attempts = 3, retryDelayMs = 1000 }: FetchOptions): Promise<MissaleMeumDay[]> {
+  const url = `https://www.missalemeum.com/en/api/v5/calendar/${year}`;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const res = await fetchImpl(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      lastError = err;
+      if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, retryDelayMs * attempt));
+    }
+  }
+  throw new Error(`Failed to fetch Missale Meum data for ${year} after ${attempts} attempts: ${lastError}`);
+}
+
+/**
+ * Fetches [startYear, endYear] one year at a time (it's a small free
+ * service, so no parallel burst), retrying each year a few times. Throws if
+ * any year still fails, so a refresh never writes a partial table.
+ */
+export async function fetchTodaySummaryTable1962(
   startYear: number,
   endYear: number,
-  fetchImpl: typeof fetch = fetch,
+  options: FetchOptions = {},
 ): Promise<TodaySummaryTable1962> {
-  const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
-  const results = await Promise.all(years.map((year) => fetchYear(year, fetchImpl)));
-
   const table: TodaySummaryTable1962 = {};
-  for (const result of results) {
-    if (!result) continue;
-    const [, days] = result;
-    for (const day of days) {
+  for (let year = startYear; year <= endYear; year++) {
+    for (const day of await fetchYear(year, options)) {
       table[day.id] = { name: day.title, color: COLOR_NAMES[day.colors[0]] ?? day.colors[0] };
     }
   }
   return table;
+}
+
+/** One entry per line, sorted by date, so a refresh's git diff shows exactly which days changed. */
+export function serializeTodaySummaryTable1962(table: TodaySummaryTable1962): string {
+  const lines = Object.keys(table)
+    .sort()
+    .map((date) => `  ${JSON.stringify(date)}: ${JSON.stringify(table[date])}`);
+  return `{\n${lines.join(",\n")}\n}\n`;
+}
+
+function daysInYear(year: number): number {
+  return new Date(Date.UTC(year, 1, 29)).getUTCMonth() === 1 ? 366 : 365;
+}
+
+/**
+ * The slice of the saved table covering [startYear, endYear]. Throws if any
+ * of those years is missing or incomplete, so the build stops instead of
+ * the site silently showing "Unknown" for those dates.
+ */
+export function selectTodaySummaryYears1962(saved: TodaySummaryTable1962, startYear: number, endYear: number): TodaySummaryTable1962 {
+  const selected: TodaySummaryTable1962 = {};
+  const incomplete: number[] = [];
+  for (let year = startYear; year <= endYear; year++) {
+    const dates = Object.keys(saved).filter((date) => date.startsWith(`${year}-`));
+    if (dates.length !== daysInYear(year)) incomplete.push(year);
+    for (const date of dates) selected[date] = saved[date];
+  }
+  if (incomplete.length > 0) {
+    throw new Error(
+      `Saved 1962 data (todaySummaryTable1962.json) is missing or incomplete for ${incomplete.join(", ")}. ` +
+        "Widen the range in scripts/refresh1962.ts, run `npm run refresh:1962`, and commit the result.",
+    );
+  }
+  return selected;
 }
