@@ -18,12 +18,13 @@ describe("buildViewModel", () => {
     table = buildNovusOrdoTable(2025, 2026);
   });
 
-  it("produces the today-summary, ember day, fasting, solemnity/feast, and saint sections in order", () => {
+  it("produces the today-summary, ember day, fasting, holy day, solemnity/feast, and saint sections in order", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
     expect(vm.sections.map((s) => s.title)).toEqual([
       "What Is Today in the Church Calendar?",
       "Is Today an Ember Day?",
       "Is Today a Day of Fasting or Abstinence?",
+      "Is Today a Holy Day of Obligation?",
       "Is Today a Solemnity or Feast Day?",
       "Saint of the Day",
     ]);
@@ -49,14 +50,14 @@ describe("buildViewModel", () => {
 
   it("carries a next-feast-day footnote naming the correct upcoming solemnity", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
-    const feastSection = vm.sections[3];
+    const feastSection = vm.sections[4];
     expect(feastSection.left.footnote).toMatch(/Next Feast Day: Assumption of the Blessed Virgin Mary/);
     expect(feastSection.right.footnote).toMatch(/Next Solemnity: The Assumption of the Blessed Virgin Mary/);
   });
 
   it("keeps the Ascension on Thursday with a note that most US dioceses celebrate it Sunday", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 4, 14)), table, todaySummaryTable1962); // Thu, May 14
-    const feastSection = vm.sections[3];
+    const feastSection = vm.sections[4];
     expect(feastSection.right.description).toBe("Ascension of the Lord");
     expect(feastSection.note).toBe(
       "In most US dioceses, the Ascension is celebrated on Sunday, May 17, 2026. It stays on Thursday in the provinces of Boston, Hartford, New York, Omaha and Philadelphia.",
@@ -65,7 +66,7 @@ describe("buildViewModel", () => {
 
   it("notes on the following Sunday that most US dioceses celebrate Ascension Thursday today", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 4, 17)), table, todaySummaryTable1962); // Sun, May 17
-    expect(vm.sections[3].note).toBe(
+    expect(vm.sections[4].note).toBe(
       "In most US dioceses, Ascension Thursday (May 14, 2026) is celebrated today. The provinces of Boston, Hartford, New York, Omaha and Philadelphia keep it on Thursday.",
     );
   });
@@ -73,13 +74,76 @@ describe("buildViewModel", () => {
   it("has no Ascension note on other days", () => {
     for (const day of [13, 15, 16, 18]) {
       const vm = buildViewModel(new Date(Date.UTC(2026, 4, day)), table, todaySummaryTable1962);
-      expect(vm.sections[3].note).toBeUndefined();
+      expect(vm.sections[4].note).toBeUndefined();
     }
+  });
+
+  describe("holy day of obligation section", () => {
+    const obligationOn = (y: number, m: number, d: number) =>
+      buildViewModel(new Date(Date.UTC(y, m - 1, d)), table, todaySummaryTable1962).sections[3];
+
+    it("labels the columns by code and always notes that current law binds everyone", () => {
+      const section = obligationOn(2026, 10, 13);
+      expect(section.left.label).toBe("1917 Code (historical)");
+      expect(section.right.label).toBe("Current Law (US)");
+      expect(section.note).toMatch(/current Code of Canon Law \(1983\) binds all Catholics/);
+      expect(section.left).toMatchObject({ value: "No", tone: "no", highlighted: false });
+      expect(section.right).toMatchObject({ value: "No", tone: "no", highlighted: false });
+    });
+
+    it("says yes on both sides for an ordinary Sunday", () => {
+      const section = obligationOn(2026, 10, 11);
+      expect(section.left).toMatchObject({ value: "Yes!", description: "Every Sunday is a day of obligation.", highlighted: true });
+      expect(section.right).toMatchObject({ value: "Yes!", description: "Every Sunday is a day of obligation.", highlighted: true });
+    });
+
+    it("shows the Saturday exemption for the Assumption on Saturday, August 15, 2026", () => {
+      const section = obligationOn(2026, 8, 15);
+      expect(section.left).toMatchObject({ value: "Yes!", description: "Assumption of the Blessed Virgin Mary" });
+      expect(section.left.footnote).toBeUndefined();
+      expect(section.right).toMatchObject({
+        value: "No",
+        description: "Assumption of the Blessed Virgin Mary falls on a Saturday this year, so the obligation is lifted.",
+      });
+    });
+
+    it("footnotes a 1917 holy day the US didn't keep", () => {
+      const section = obligationOn(2026, 1, 6);
+      expect(section.left).toMatchObject({ value: "Yes!", description: "Epiphany of Our Lord" });
+      expect(section.left.footnote).toBe("In the US, this was not kept as a holy day under the 1917 Code.");
+      expect(section.right.value).toBe("No");
+    });
+
+    it("notes Honolulu on a mainland-only holy day", () => {
+      const section = obligationOn(2026, 1, 1);
+      expect(section.right).toMatchObject({ value: "Yes!", description: "Mary, Mother of God" });
+      expect(section.right.footnote).toMatch(/Diocese of Honolulu/);
+    });
+
+    it("names the provinces on Ascension Thursday and the Sunday it moves to", () => {
+      const section = obligationOn(2026, 5, 14);
+      expect(section.left).toMatchObject({ value: "Yes!", description: "Ascension of the Lord" });
+      expect(section.right.value).toBe("Only in Some Provinces");
+      expect(section.right.description).toBe(
+        "Ascension of the Lord: a holy day only in the provinces of Boston, Hartford, New York, Omaha and Philadelphia. Elsewhere it moves to Sunday, May 17, 2026.",
+      );
+      expect(obligationOn(2026, 5, 17).right.description).toBe("Sunday, and in most US dioceses also the Ascension of the Lord");
+    });
+
+    it("moves the Immaculate Conception's obligation to Monday when Dec 8 is a Sunday", () => {
+      expect(obligationOn(2024, 12, 8).right.description).toBe(
+        "Sunday. The Immaculate Conception of the Blessed Virgin Mary moves to Monday this year, and is also a day of obligation.",
+      );
+      expect(obligationOn(2024, 12, 9).right).toMatchObject({
+        value: "Yes!",
+        description: "Immaculate Conception of the Blessed Virgin Mary, moved from Sunday",
+      });
+    });
   });
 
   it("shows the saint of the day on both calendars", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 6, 6)), table, todaySummaryTable1962);
-    const saintSection = vm.sections[4];
+    const saintSection = vm.sections[5];
     expect(saintSection.left.value).toBe("St. Maria Goretti");
     expect(saintSection.right.value).toMatch(/Maria Goretti/);
   });
@@ -123,7 +187,7 @@ describe("buildViewModel", () => {
 
   it("shows a patron-of footnote on both calendars for a curated saint", () => {
     const vm = buildViewModel(new Date(Date.UTC(2025, 11, 6)), table, todaySummaryTable1962); // St. Nicholas (Sat, not overridden by a Sunday)
-    const saintSection = vm.sections[4];
+    const saintSection = vm.sections[5];
     expect(saintSection.left.value).toBe("St. Nicholas");
     expect(saintSection.left.footnote).toBe("Patron of: Children and sailors");
     expect(saintSection.right.value).toMatch(/Nicholas/);
@@ -132,7 +196,7 @@ describe("buildViewModel", () => {
 
   it("omits the patron-of footnote for the ambiguous 1962 St. Boniface but shows it for Novus Ordo", () => {
     const vm = buildViewModel(new Date(Date.UTC(2026, 5, 5)), table, todaySummaryTable1962); // June 5
-    const saintSection = vm.sections[4];
+    const saintSection = vm.sections[5];
     expect(saintSection.left.value).toBe("St. Boniface");
     expect(saintSection.left.footnote).toBeUndefined();
     expect(saintSection.right.footnote).toBe("Patron of: Germany");
