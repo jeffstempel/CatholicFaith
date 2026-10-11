@@ -60,3 +60,11 @@ export function getHolyDayOfObligation1917(date: Date): HolyDayOfObligation1917 
 
   return { isSunday, feast, notKeptInUS, stJosephFeastMoved };
 }
+
+/** The next holy day strictly after `from`, not counting ordinary Sundays. Christmas guarantees one within a year. */
+export function getNextHolyDayOfObligation1917(from: Date): { date: Date; feast: string } {
+  for (let date = addDays(from, 1); ; date = addDays(date, 1)) {
+    const { feast } = getHolyDayOfObligation1917(date);
+    if (feast) return { date, feast };
+  }
+}

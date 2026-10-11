@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getHolyDayOfObligation1917 } from "./holyDaysOfObligation";
+import { getHolyDayOfObligation1917, getNextHolyDayOfObligation1917 } from "./holyDaysOfObligation";
 
 const on = (y: number, m: number, d: number) => getHolyDayOfObligation1917(new Date(Date.UTC(y, m - 1, d)));
 
@@ -48,5 +48,18 @@ describe("getHolyDayOfObligation1917", () => {
     expect(on(2028, 3, 19)).toMatchObject({ isSunday: true, stJosephFeastMoved: true });
     expect(on(2035, 3, 19)).toMatchObject({ isSunday: false, stJosephFeastMoved: true });
     expect(on(2026, 3, 19).stJosephFeastMoved).toBe(false);
+  });
+});
+
+describe("getNextHolyDayOfObligation1917", () => {
+  const next = (y: number, m: number, d: number) => getNextHolyDayOfObligation1917(new Date(Date.UTC(y, m - 1, d)));
+
+  it("finds the next holy day strictly after the given date, skipping ordinary Sundays", () => {
+    expect(next(2026, 10, 10)).toEqual({ date: new Date(Date.UTC(2026, 10, 1)), feast: "All Saints" });
+    expect(next(2026, 11, 1)).toEqual({ date: new Date(Date.UTC(2026, 11, 8)), feast: "Immaculate Conception of the Blessed Virgin Mary" });
+  });
+
+  it("crosses into the next year", () => {
+    expect(next(2026, 12, 25)).toEqual({ date: new Date(Date.UTC(2027, 0, 1)), feast: "Circumcision of Our Lord" });
   });
 });

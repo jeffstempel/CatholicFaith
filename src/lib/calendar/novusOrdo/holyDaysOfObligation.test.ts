@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getHolyDayOfObligationUS } from "./holyDaysOfObligation";
+import { getHolyDayOfObligationUS, getNextHolyDayOfObligationUS } from "./holyDaysOfObligation";
 
 const on = (y: number, m: number, d: number) => getHolyDayOfObligationUS(new Date(Date.UTC(y, m - 1, d)));
 
@@ -48,5 +48,27 @@ describe("getHolyDayOfObligationUS", () => {
     for (const [m, d] of [[1, 6], [3, 19], [6, 4], [6, 29]]) {
       expect(on(2026, m, d)).toMatchObject({ status: "none", feast: null });
     }
+  });
+});
+
+describe("getNextHolyDayOfObligationUS", () => {
+  const next = (y: number, m: number, d: number) => getNextHolyDayOfObligationUS(new Date(Date.UTC(y, m - 1, d)));
+  const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d));
+
+  it("finds the next holy day strictly after the given date, skipping ordinary Sundays", () => {
+    expect(next(2026, 11, 1)).toEqual({ date: utc(2026, 12, 8), feast: "Immaculate Conception of the Blessed Virgin Mary", ascensionTransferred: false });
+    expect(next(2026, 12, 25)).toEqual({ date: utc(2027, 1, 1), feast: "Mary, Mother of God", ascensionTransferred: false });
+  });
+
+  it("skips a holy day lifted that year", () => {
+    expect(next(2026, 8, 1).date).toEqual(utc(2026, 11, 1)); // Aug 15, 2026 is a Saturday
+  });
+
+  it("skips Dec 8 on a Sunday in favor of Monday", () => {
+    expect(next(2024, 12, 1).date).toEqual(utc(2024, 12, 9));
+  });
+
+  it("gives the Ascension Sunday rather than Thursday", () => {
+    expect(next(2026, 5, 1)).toEqual({ date: utc(2026, 5, 17), feast: "Ascension of the Lord", ascensionTransferred: true });
   });
 });

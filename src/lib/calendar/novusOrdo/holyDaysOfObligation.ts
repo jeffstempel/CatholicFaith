@@ -100,3 +100,18 @@ export function getHolyDayOfObligationUS(date: Date): HolyDayOfObligationUS {
 
   return result;
 }
+
+/**
+ * The next holy day strictly after `from`, not counting ordinary Sundays.
+ * Skips holy days lifted that year, and Dec 8 on a Sunday (it's kept the
+ * next day). For the Ascension it gives the Sunday most US dioceses keep,
+ * not Thursday. Christmas guarantees one within a year.
+ */
+export function getNextHolyDayOfObligationUS(from: Date): { date: Date; feast: string; ascensionTransferred: boolean } {
+  for (let date = addDays(from, 1); ; date = addDays(date, 1)) {
+    const { status, feast, transfer } = getHolyDayOfObligationUS(date);
+    if (feast && status === "obligatory" && transfer !== "toMonday") {
+      return { date, feast, ascensionTransferred: transfer === "fromThursday" };
+    }
+  }
+}

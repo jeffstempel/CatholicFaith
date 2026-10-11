@@ -100,24 +100,46 @@ describe("buildViewModel", () => {
     it("shows the Saturday exemption for the Assumption on Saturday, August 15, 2026", () => {
       const section = obligationOn(2026, 8, 15);
       expect(section.left).toMatchObject({ value: "Yes!", description: "Assumption of the Blessed Virgin Mary" });
-      expect(section.left.footnote).toBeUndefined();
       expect(section.right).toMatchObject({
         value: "No",
         description: "Assumption of the Blessed Virgin Mary falls on a Saturday this year, so the obligation is lifted.",
       });
     });
 
-    it("footnotes a 1917 holy day the US didn't keep", () => {
+    it("notes a 1917 holy day the US didn't keep", () => {
       const section = obligationOn(2026, 1, 6);
-      expect(section.left).toMatchObject({ value: "Yes!", description: "Epiphany of Our Lord" });
-      expect(section.left.footnote).toBe("In the US, this was not kept as a holy day under the 1917 Code.");
+      expect(section.left).toMatchObject({
+        value: "Yes!",
+        description: "Epiphany of Our Lord. In the US, this was not kept as a holy day under the 1917 Code.",
+      });
       expect(section.right.value).toBe("No");
     });
 
     it("notes Honolulu on a mainland-only holy day", () => {
       const section = obligationOn(2026, 1, 1);
-      expect(section.right).toMatchObject({ value: "Yes!", description: "Mary, Mother of God" });
-      expect(section.right.footnote).toMatch(/Diocese of Honolulu/);
+      expect(section.right).toMatchObject({
+        value: "Yes!",
+        description:
+          "Mary, Mother of God. Not a holy day in the Diocese of Honolulu, which keeps only Christmas and the Immaculate Conception.",
+      });
+    });
+
+    it("footnotes the next holy day on each side, skipping ordinary Sundays", () => {
+      const section = obligationOn(2026, 1, 6);
+      expect(section.left.footnote).toBe("Next Holy Day: Saint Joseph, Spouse of the Blessed Virgin Mary (March 19, 2026)");
+      expect(section.right.footnote).toBe("Next Holy Day: Ascension of the Lord (May 17, 2026 in most US dioceses)");
+    });
+
+    it("skips a holy day whose obligation is lifted that year", () => {
+      const section = obligationOn(2025, 10, 20); // Nov 1, 2025 is a Saturday
+      expect(section.left.footnote).toBe("Next Holy Day: All Saints (November 1, 2025)");
+      expect(section.right.footnote).toBe("Next Holy Day: Immaculate Conception of the Blessed Virgin Mary (December 8, 2025)");
+    });
+
+    it("points to Monday when Dec 8 is a Sunday", () => {
+      const section = obligationOn(2024, 12, 6);
+      expect(section.left.footnote).toBe("Next Holy Day: Immaculate Conception of the Blessed Virgin Mary (December 8, 2024)");
+      expect(section.right.footnote).toBe("Next Holy Day: Immaculate Conception of the Blessed Virgin Mary (December 9, 2024)");
     });
 
     it("names the provinces on Ascension Thursday and the Sunday it moves to", () => {
