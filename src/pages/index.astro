@@ -1,32 +1,21 @@
 ---
 import Base from "../layouts/Base.astro";
 import { todayUTC } from "../lib/calendar/dateUtils";
-import { selectTodaySummaryYears1962 } from "../lib/calendar/1962/todaySummaryTable";
-import savedTodaySummaryTable1962 from "../lib/calendar/1962/todaySummaryTable1962.json";
-import { buildNovusOrdoTable } from "../lib/calendar/novusOrdo/table";
 import { renderSections } from "../lib/render";
+import { getSiteTables } from "../lib/siteData";
 import { buildViewModel } from "../lib/viewModel";
 
 const today = todayUTC();
 const copyrightYear = today.getUTCFullYear();
 
-const TABLE_YEARS_BEFORE = 10;
-const TABLE_YEARS_AFTER = 10;
-const minYear = copyrightYear - TABLE_YEARS_BEFORE;
-const maxYear = copyrightYear + TABLE_YEARS_AFTER;
-const novusOrdoTable = buildNovusOrdoTable(minYear, maxYear);
-const todaySummaryTable1962 = selectTodaySummaryYears1962(savedTodaySummaryTable1962, minYear, maxYear);
+// The build-day render below is what search engines index. Every other date
+// (and the visitor's own local "today") is rendered client-side from the
+// /data/*.json tables — see lib/siteData.ts and src/pages/data/.
+const { minYear, maxYear, novusOrdoTable, todaySummaryTable1962 } = getSiteTables();
 const minDate = `${minYear}-01-01`;
 const maxDate = `${maxYear}-12-31`;
 
 const vm = buildViewModel(today, novusOrdoTable, todaySummaryTable1962);
-
-// Embedded for the client script to read without ever loading romcal (or
-// making a live network call) itself — see calendar/novusOrdo/lookup.ts and
-// calendar/1962/todaySummaryLookup.ts. Escape "<" so a stray "</script>"-like
-// sequence in any celebration name can't break out of the tag.
-const novusOrdoTableJson = JSON.stringify(novusOrdoTable).replace(/</g, "\\u003c");
-const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(/</g, "\\u003c");
 ---
 
 <Base>
@@ -50,27 +39,25 @@ const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(
     <p>&copy; <span id="copyright-year">{copyrightYear}</span> CatholicFaith.Today</p>
   </footer>
 
-  <script type="application/json" id="novus-ordo-table" is:inline set:html={novusOrdoTableJson} />
-  <script type="application/json" id="today-summary-table-1962" is:inline set:html={todaySummaryTable1962Json} />
-
   <script>
     import { fromISODate, todayLocal, toISODate } from "../lib/calendar/dateUtils";
     import type { NovusOrdoTable } from "../lib/calendar/novusOrdo/lookup";
     import type { TodaySummaryTable1962 } from "../lib/calendar/1962/todaySummaryLookup";
+    import { NOVUS_ORDO_TABLE_PATH, TODAY_SUMMARY_TABLE_1962_PATH } from "../lib/dataPaths";
     import { renderSections } from "../lib/render";
     import { buildViewModel } from "../lib/viewModel";
-
-    const tableEl = document.getElementById("novus-ordo-table")!;
-    const novusOrdoTable: NovusOrdoTable = JSON.parse(tableEl.textContent ?? "{}");
-
-    const todaySummaryTableEl = document.getElementById("today-summary-table-1962")!;
-    const todaySummaryTable1962: TodaySummaryTable1962 = JSON.parse(todaySummaryTableEl.textContent ?? "{}");
 
     const sectionsEl = document.getElementById("sections")!;
     const dateLabelEl = document.getElementById("date-label")!;
     const copyrightYearEl = document.getElementById("copyright-year")!;
     const dateInput = document.getElementById("date-input") as HTMLInputElement;
-    const todayButton = document.getElementById("today-button")!;
+    const todayButton = document.getElementById("today-button") as HTMLButtonElement;
+
+    async function fetchJson<T>(path: string): Promise<T> {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+      return res.json();
+    }
 
     // The URL's ?date= is the shareable permalink for a specific day. Social
     // previews stay generic (see Base.astro) — a query string can't change
@@ -86,21 +73,13 @@ const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(
       history.replaceState(null, "", url);
     }
 
-    function renderFor(date: Date, todayIso: string) {
-      const vm = buildViewModel(date, novusOrdoTable, todaySummaryTable1962);
-      sectionsEl.innerHTML = renderSections(vm);
-      dateLabelEl.textContent = vm.dateLabel;
-      dateInput.value = vm.isoDate;
-      updateUrlForDate(vm.isoDate, todayIso);
-    }
-
     // The page is statically built ahead of time, so its initial content can
     // be stale by however long it's been since the last deploy — and UTC's
     // day boundary doesn't line up with the visitor's own midnight anyway.
-    // Immediately recompute using the visitor's own local calendar date to
-    // correct both on every load — unless a specific date was requested via
-    // ?date=, in which case that's a shared permalink and should win instead
-    // of silently jumping back to today.
+    // Once the data tables load, recompute using the visitor's own local
+    // calendar date to correct both — unless a specific date was requested
+    // via ?date=, in which case that's a shared permalink and should win
+    // instead of silently jumping back to today.
     const browserToday = todayLocal();
     const todayIso = toISODate(browserToday);
     copyrightYearEl.textContent = String(browserToday.getUTCFullYear());
@@ -109,15 +88,40 @@ const todaySummaryTable1962Json = JSON.stringify(todaySummaryTable1962).replace(
     const parsedRequestedDate = requestedDate ? fromISODate(requestedDate) : null;
     const initialDate = parsedRequestedDate && !Number.isNaN(parsedRequestedDate.getTime()) ? parsedRequestedDate : browserToday;
 
-    renderFor(initialDate, todayIso);
+    // Nothing to pick dates with until the tables arrive.
+    dateInput.disabled = true;
+    todayButton.disabled = true;
 
-    dateInput.addEventListener("change", () => {
-      if (!dateInput.value) return;
-      renderFor(fromISODate(dateInput.value), todayIso);
-    });
+    Promise.all([
+      fetchJson<NovusOrdoTable>(NOVUS_ORDO_TABLE_PATH),
+      fetchJson<TodaySummaryTable1962>(TODAY_SUMMARY_TABLE_1962_PATH),
+    ])
+      .then(([novusOrdoTable, todaySummaryTable1962]) => {
+        function renderFor(date: Date) {
+          const vm = buildViewModel(date, novusOrdoTable, todaySummaryTable1962);
+          sectionsEl.innerHTML = renderSections(vm);
+          dateLabelEl.textContent = vm.dateLabel;
+          dateInput.value = vm.isoDate;
+          updateUrlForDate(vm.isoDate, todayIso);
+        }
 
-    todayButton.addEventListener("click", () => {
-      renderFor(browserToday, todayIso);
-    });
+        renderFor(initialDate);
+
+        dateInput.addEventListener("change", () => {
+          if (!dateInput.value) return;
+          renderFor(fromISODate(dateInput.value));
+        });
+
+        todayButton.addEventListener("click", () => {
+          renderFor(browserToday);
+        });
+
+        dateInput.disabled = false;
+        todayButton.disabled = false;
+      })
+      .catch((err) => {
+        // Leave the build-day content in place; the date picker stays disabled.
+        console.error("Couldn't load the calendar data for the date picker.", err);
+      });
   </script>
 </Base>

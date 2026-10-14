@@ -11,6 +11,10 @@ const {
   title = "Catholic Faith Today",
   description = "The Traditional 1962 and Novus Ordo Catholic calendars, side by side: Ember Days, Solemnities, Feast Days, and the Saint of the Day.",
 } = Astro.props;
+
+// The one address search engines should index for this page, whatever
+// variant (http, no www, ?date=...) they arrived through.
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
 ---
 
 <html lang="en">
@@ -18,7 +22,8 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta property="og:title" content={title} />
-    <meta property="og:url" content={new URL(Astro.url.pathname, "https://www.catholicfaith.today").toString()} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:url" content={canonicalUrl} />
     <meta property="og:type" content="website" />
     <meta property="og:description" content={description} />
     <meta name="description" content={description} />
