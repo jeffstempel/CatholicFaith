@@ -35,5 +35,18 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
       <NavMenu currentPath={Astro.url.pathname} />
       <slot />
     </div>
+    {
+      // Cloudflare Web Analytics: cookie-free visitor counts. Production
+      // only, so local dev doesn't count as visits. The token is public by
+      // design (it's in every page's source).
+      import.meta.env.PROD && (
+        <script
+          is:inline
+          type="module"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "b207568c987f40f496356c673ec87780"}'
+        ></script>
+      )
+    }
   </body>
 </html>
