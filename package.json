@@ -13,7 +13,7 @@
     "refresh:1962": "node scripts/refresh1962.ts"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/sitemap": "^3.7.6",
     "astro": "^7.3.8",
     "romcal": "^1.3.0"
   },
